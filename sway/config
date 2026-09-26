@@ -94,6 +94,10 @@ mouse_warping container
 focus_follows_mouse yes
 workspace_layout default
 
+# Floating popups: GNOME Text Editor + Nautilus preview (sushi)
+for_window [app_id="org.gnome.TextEditor"] floating enable, resize set 900 650, move position center
+for_window [app_id="org.gnome.NautilusPreviewer"] floating enable, resize set 800 600, move position center
+
 # Lid close locks (ported from the Hyprland lid-switch bind)
 bindswitch lid:on exec $swayscripts/lid-close.sh # Lock on lid close
 

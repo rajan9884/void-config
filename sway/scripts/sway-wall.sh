@@ -50,6 +50,10 @@ printf '%s' "$WALLPAPER" > ~/.cache/current-wallpaper
 # 2. Extract colors with matugen (updates waybar, rofi, kitty, sway, swaync, …)
 matugen image "$WALLPAPER" --type scheme-content -c ~/.config/matugen/config.toml --source-color-index 0
 
+# 2.1 Restart swayosd-server so it picks up the new style.css (reads CSS only at startup).
+pkill -x swayosd-server >/dev/null 2>&1 || true
+setsid swayosd-server >/dev/null 2>&1 < /dev/null &
+
 # 2.5 Bump unpacked Chromium theme version so the next launch picks up colors
 THEME_MANIFEST="$HOME/.config/helium-theme/manifest.json"
 if [ -f "$THEME_MANIFEST" ]; then

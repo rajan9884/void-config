@@ -48,7 +48,7 @@ exec dbus-update-activation-environment --all
 # Starting wireplumber manually as well creates a duplicate session
 # manager and wedges PipeWire (no audio, pactl/wpctl hang).
 exec sh -c "pkill -x pipewire-pulse; pkill -x wireplumber; pkill -x pipewire; sleep 1; exec pipewire"
-exec easyeffects --service-mode
+exec sh -c "for i in $(seq 1 25); do timeout 1 pactl info >/dev/null 2>&1 && break; sleep 0.2; done; exec easyeffects --service-mode"
 # Backlight persistence: kernel resets intel_backlight at boot; restore last saved value.
 exec sh -c 'B=$(cat "${XDG_STATE_HOME:-$HOME/.local/state}/backlight" 2>/dev/null); case "$B" in ""|*[!0-9]*) ;; *) brightnessctl -c backlight set "$B" >/dev/null 2>&1 || true;; esac'
 exec /usr/libexec/polkit-gnome-authentication-agent-1

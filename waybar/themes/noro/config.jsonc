@@ -179,6 +179,8 @@
         "return-type": "json",
         "interval": 2,
         "on-click": "swaync-client -t -sw",
+        "on-click-right": "swaync-client -C -sw",
+        "on-click-middle": "swaync-client -d -sw",
         "tooltip": true
     },
     "custom/power": {

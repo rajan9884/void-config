@@ -23,7 +23,7 @@ include ~/.config/sway/colors
 
 ### Outputs  (sway) ###
 output eDP-1 mode 2880x1800@90Hz position 0,0 scale 2
-output * bg ~/.local/share/wallpapers/Wallpaper/fallback-wallpaper.jpg fill
+output * bg ~/.local/share/wallpapers/fallback-wallpaper.jpg fill
 
 ### Input  (sway) ###
 input * {
@@ -60,7 +60,7 @@ exec swayidle -w -C ~/.config/sway/swayidle.conf
 # until the next restart (volume module "gone after reboot").
 exec sh -c "for i in $(seq 1 25); do timeout 1 pactl info >/dev/null 2>&1 && break; sleep 0.2; done; exec waybar -c ~/.config/waybar/config.jsonc -s ~/.config/waybar/style.css"
 exec sh -c "pgrep -x swayosd-server >/dev/null || exec swayosd-server"
-exec mako
+exec swaync
 exec nm-applet
 exec blueman-applet
 exec autotiling
@@ -159,7 +159,7 @@ bindsym $mod+Ctrl+p exec ~/.config/waybar/scripts/power-menu.sh
 # > Bluetooth menu
 bindsym $mod+Ctrl+b exec ~/.config/waybar/scripts/bluetooth-menu.sh
 # > Control center
-bindsym $mod+Alt+c exec ~/.config/waybar/scripts/control-center.sh
+bindsym $mod+Alt+c exec swaync-client -t -sw
 # > Toggle night light (wlsunset)
 bindsym $mod+Ctrl+n exec $swayscripts/night-light.sh
 # > Toggle idle lock
@@ -441,17 +441,17 @@ bindsym $mod+v exec $swayscripts/universal-clipboard.sh paste
 # > Universal cut
 bindsym $mod+x exec $swayscripts/universal-clipboard.sh cut
 
-### Notifications (mako — Void port of the SwayNC binds) ###
+### Notifications (swaync panel) ###
 # > Close last notification
-bindsym --locked $mod+comma exec makoctl dismiss
+bindsym --locked $mod+comma exec swaync-client --close-latest -sw
 # > Close all notifications
-bindsym --locked $mod+Shift+comma exec makoctl dismiss --all
+bindsym --locked $mod+Shift+comma exec swaync-client --close-all -sw
 # > Pause/resume notifications
-bindsym --locked $mod+Ctrl+comma exec makoctl mode -t do-not-disturb
-# > Replay last notification
-bindsym --locked $mod+Alt+comma exec makoctl restore
-# > Notification history in rofi
-bindsym --locked $mod+Shift+Alt+comma exec $swayscripts/notification-history.sh
+bindsym --locked $mod+Ctrl+comma exec swaync-client -d -sw
+# > Toggle notification panel
+bindsym --locked $mod+Alt+comma exec swaync-client -t -sw
+# > Open notification panel
+bindsym --locked $mod+Shift+Alt+comma exec swaync-client -op -sw
 
 ### Dictation (voxtype — binds run only if installed, else no-op) ###
 # > Toggle dictation
@@ -466,3 +466,8 @@ bindsym --release F9 exec voxtype record stop
 # - Cursor zoom + single-window square aspect have no sway equivalent.
 # - Super+slash opens the cheatsheet (it shadowed monitor-scale in Hyprland too);
 #   monitor scaling lives on Super+Ctrl+Alt+Up/Down.
+
+# Current wallpaper as sway's own background (rewritten by sway-wall.sh on
+# every switch, AFTER the static fallback line above). This way a reload,
+# reboot, or awww hiccup shows the current image instead of the stale fallback.
+include ~/.config/sway/wallpaper

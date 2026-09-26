@@ -39,7 +39,7 @@ get_bright_bar() {
 }
 
 DND_STATE="Off"
-if makoctl mode 2>/dev/null | grep -q do-not-disturb; then DND_STATE="On"; fi
+if [ "$(swaync-client -D -sw 2>/dev/null)" = "true" ]; then DND_STATE="On"; fi
 
 # --- Prepare Menu Items ---
 WIFI_SSID=$(get_wifi)
@@ -69,7 +69,7 @@ case "$CHOICE" in
     *"Sound"*)
         kitty --class wiremix -e wiremix ;;
     *"Focus"*)
-        makoctl mode -t do-not-disturb ;;
+        swaync-client -d -sw ;;
     *"Power"*)
         ~/.config/waybar/scripts/power-menu.sh ;;
 esac

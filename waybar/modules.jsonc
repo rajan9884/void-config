@@ -76,7 +76,8 @@
         "exec": "~/.config/waybar/scripts/notifications.sh",
         "return-type": "json",
         "interval": 2,
-        "on-click": "makoctl dismiss --all",
+        "on-click": "swaync-client -t -sw",
+        "on-click-right": "swaync-client -C -sw",
         "tooltip": true
     },
 

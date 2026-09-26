@@ -34,16 +34,16 @@ $time\
 \n$character"""
 
 [palettes.matugen]
-primary = "#c0c6da"
-on_primary = "#2a303f"
-primary_container = "#414757"
-secondary = "#c5c6ce"
-on_secondary = "#2e3037"
-secondary_container = "#45464e"
-tertiary = "#d8bfd1"
+primary = "#a9dbea"
+on_primary = "#003641"
+primary_container = "#8ebfce"
+secondary = "#b7cad0"
+on_secondary = "#223338"
+secondary_container = "#384a4f"
+tertiary = "#e2c9f7"
 error = "#ffb4ab"
-surface = "#131314"
-on_surface_variant = "#c6c6cc"
+surface = "#111415"
+on_surface_variant = "#c0c8cb"
 
 [character]
 success_symbol = "[❯](bold tertiary)"

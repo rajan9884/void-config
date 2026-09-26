@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # ──────────────────────────────────────────────
 #   Random Wallpaper Switcher (sway/Void port)
-#   Picks from ~/.local/share/wallpapers/Wallpaper
+#   Picks from ~/.local/share/wallpapers
 # ──────────────────────────────────────────────
 set -euo pipefail
-WALL_DIR="$HOME/.local/share/wallpapers/Wallpaper"
+WALL_DIR="$HOME/.local/share/wallpapers"
 SCRIPT="$HOME/.config/sway/scripts/sway-wall.sh"
 SELECTED_WALL=$(find "$WALL_DIR" -maxdepth 1 -type f \( -iname "*.jpg" -o -iname "*.png" -o -iname "*.jpeg" -o -iname "*.webp" \) 2>/dev/null | shuf -n 1)
 if [ -n "${SELECTED_WALL:-}" ]; then

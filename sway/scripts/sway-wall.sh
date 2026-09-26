@@ -9,20 +9,33 @@ WALLPAPER="${1:-}"
 [ -z "$WALLPAPER" ] && { echo "Usage: sway-wall.sh /path/to/wallpaper.jpg" >&2; exit 1; }
 [ -f "$WALLPAPER" ] || { echo "Not found: $WALLPAPER" >&2; exit 1; }
 
+# One switch at a time: rapid Super+R presses used to queue up full
+# decode+transition+matugen+reload cycles, each slower than the last.
+# mkdir is atomic and (unlike flock fds) can't leak into child processes.
+LOCKDIR=/tmp/sway-wall.lockdir
+if ! mkdir "$LOCKDIR" 2>/dev/null; then
+    # Stale lock (e.g. killed mid-run)? Reap after 2 minutes.
+    if [ -n "$(find "$LOCKDIR" -maxdepth 0 -mmin +2 2>/dev/null)" ]; then
+        rm -rf "$LOCKDIR" && mkdir "$LOCKDIR" 2>/dev/null || \
+            { echo "wallpaper switch already in progress, skipping" >&2; exit 0; }
+    else
+        echo "wallpaper switch already in progress, skipping" >&2; exit 0
+    fi
+fi
+trap 'rmdir "$LOCKDIR" 2>/dev/null' EXIT
+
 # 1. Set wallpaper. Prefer awww-daemon when it is up (it paints over the
 #    sway background, so the swaymsg fallback MUST only run when the
-#    daemon is down — otherwise the new wallpaper would be hidden
-#    behind awww's layer and appear "stuck" while matugen still recolors.
+#    daemon is down — otherwise the output reconfigure aborts awww's
+#    grow animation mid-flight and you see "no transition".
 if awww query >/dev/null 2>&1; then
-    if ! awww img "$WALLPAPER" --transition-type grow --transition-duration 1.5; then
-        notify-send "Wallpaper Error" "awww failed to set $(basename "$WALLPAPER")" -u critical
-        exit 1
-    fi
+    awww img "$WALLPAPER" --transition-type grow --transition-pos center --transition-duration 1.5 --transition-fps 30 || \
+        { notify-send "Wallpaper Error" "awww failed to set $(basename "$WALLPAPER")" -u critical; exit 1; }
 else
     setsid awww-daemon >/dev/null 2>&1 < /dev/null &
     sleep 0.5
     if awww query >/dev/null 2>&1; then
-        awww img "$WALLPAPER" --transition-type grow --transition-duration 1.5 || \
+        awww img "$WALLPAPER" --transition-type grow --transition-pos center --transition-duration 1.5 --transition-fps 30 || \
             { notify-send "Wallpaper Error" "awww failed to set $(basename "$WALLPAPER")" -u critical; exit 1; }
     else
         swaymsg output "*" bg "$WALLPAPER" fill || \
@@ -34,7 +47,7 @@ fi
 printf '%s' "$WALLPAPER" > ~/.cache/current-wallpaper
 (magick "$WALLPAPER" ~/.cache/swaylock-bg.jpg 2>/dev/null || cp -p "$WALLPAPER" ~/.cache/swaylock-bg.jpg 2>/dev/null) & disown 2>/dev/null || true
 
-# 2. Extract colors with matugen (updates waybar, rofi, kitty, sway, mako, …)
+# 2. Extract colors with matugen (updates waybar, rofi, kitty, sway, swaync, …)
 matugen image "$WALLPAPER" --type scheme-content -c ~/.config/matugen/config.toml --source-color-index 0
 
 # 2.5 Bump unpacked Chromium theme version so the next launch picks up colors
@@ -54,17 +67,37 @@ if [ -f "$THEME_MANIFEST" ]; then
     rm -f "$HOME/.config/helium-theme/Cached Theme.pak"
 fi
 
-# 3. Reload sway (picks up generated ~/.config/sway/colors) + restart waybar
-swaymsg reload 2>/dev/null || true
-pkill -x waybar 2>/dev/null; pkill -x .waybar-wrapped 2>/dev/null || true
-sleep 0.5
-setsid waybar -c ~/.config/waybar/config.jsonc -s ~/.config/waybar/style.css >/dev/null 2>&1 < /dev/null &
+# 3. Persist wallpaper as sway's own background (so reboots/awww hiccups
+#    show the current image, not the stale fallback). Then apply the theme
+#    WITHOUT swaymsg reload / output-bg commands: both reconfigure outputs
+#    and flash the whole screen ~2s after the switch (the "awkward animation").
+#    Instead, resolve matugen's $vars and push client.* colors live, and
+#    reload waybar in place (SIGUSR2 = no bar blank).
+printf 'output * bg "%s" fill\n' "$WALLPAPER" > ~/.config/sway/wallpaper
+declare -A MC=()
+while read -r _ name value; do
+    [ -n "${name:-}" ] && [ -n "${value:-}" ] && MC["$name"]="$value"
+done < <(grep '^set \$m_' ~/.config/sway/colors || true)
+while read -r line; do
+    if ((${#MC[@]})); then
+        for k in "${!MC[@]}"; do line="${line//$k/${MC[$k]}}"; done
+    fi
+    case "$line" in *'$'*) continue;; esac
+    swaymsg "$line" >/dev/null 2>&1 || true
+done < <(grep '^client' ~/.config/sway/colors || true)
+if pgrep -x waybar >/dev/null 2>&1; then
+    pkill -USR2 -x waybar 2>/dev/null || true
+elif pgrep -x .waybar-wrapped >/dev/null 2>&1; then
+    pkill -USR2 -x .waybar-wrapped 2>/dev/null || true
+else
+    setsid waybar -c ~/.config/waybar/config.jsonc -s ~/.config/waybar/style.css >/dev/null 2>&1 < /dev/null &
+fi
 
 # 4. Reload kitty
 killall -SIGUSR1 kitty 2>/dev/null || true
 
-# 5. Reload mako with new colors
-makoctl reload 2>/dev/null || { pkill -x mako 2>/dev/null; setsid mako >/dev/null 2>&1 < /dev/null & }
+# 5. Reload swaync with new colors (matugen writes ~/.config/swaync/style.css)
+swaync-client --reload-css -sw 2>/dev/null || { pkill -x swaync 2>/dev/null; setsid swaync >/dev/null 2>&1 < /dev/null & }
 
 # 6. GTK apps read css at launch — restart nautilus only if a window is open
 if swaymsg -t get_tree 2>/dev/null | grep -Fq '"app_id": "org.gnome.Nautilus"'; then

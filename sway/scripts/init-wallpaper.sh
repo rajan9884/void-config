@@ -2,7 +2,7 @@
 # ──────────────────────────────────────────────
 #   Ensure wallpaper is displayed on sway start
 # ──────────────────────────────────────────────
-WALL_DIR="$HOME/.local/share/wallpapers/Wallpaper"
+WALL_DIR="$HOME/.local/share/wallpapers"
 for i in {1..30}; do
     awww query >/dev/null 2>&1 && break
     sleep 0.1

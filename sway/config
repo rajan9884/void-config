@@ -67,7 +67,10 @@ exec autotiling
 exec sh -c "gsettings set org.gnome.desktop.interface color-scheme prefer-dark 2>/dev/null || true"
 exec sh -c "wl-paste --watch cliphist store"
 exec sh -c "sleep 3 && ~/.local/bin/power-profiles autodetect"
-exec $term
+# Login terminal doubles as the kitty single-instance daemon: it pays the
+# ~1.1s Python startup once here, then every Super+Return opens via
+# `kitty @ launch` (~100ms) through terminal-launch.sh.
+exec $term -o allow_remote_control=yes --listen-on unix:$XDG_RUNTIME_DIR/kitty.sock
 
 ### Look & feel  (sway) ###
 font pango:JetBrainsMono Nerd Font 10
@@ -80,7 +83,10 @@ gaps inner 4
 gaps outer 12
 smart_borders on
 smart_gaps off
-blur enable
+# Blur off systemwide — transparency comes from app opacity (e.g. kitty
+# background_opacity), not the blur pass. Tuning lines kept so blur can be
+# re-enabled with one word if ever wanted.
+blur disable
 blur_xray enable
 blur_passes 2
 blur_radius 4
@@ -108,6 +114,10 @@ bindsym $mod+Return exec $swayscripts/terminal-launch.sh
 bindsym $mod+Space exec $menu
 # > Open browser
 bindsym $mod+Shift+b exec $browser
+# > Open browser (alt, Arch parity: Super+Shift+Return)
+bindsym $mod+Shift+Return exec $browser
+# > Open file manager (Arch parity: Super+Shift+F)
+bindsym $mod+Shift+f exec $file
 # > Open private browser window
 bindsym $mod+Shift+Alt+b exec $browser --incognito
 # > Open editor (kitty + nvim)
@@ -206,19 +216,21 @@ bindsym $mod+Alt+f fullscreen
 bindsym $mod+p layout toggle split
 # > Toggle window split
 bindsym $mod+j layout toggle split
+# > Toggle split orientation (Arch parity: workspace-layout-toggle; Arch Super+L is shadowed by focus-right, so Void uses Super+Alt+L)
+bindsym $mod+Alt+l exec $swayscripts/layout-toggle.sh
 # (workspace auto-layout via autotiling; layout-toggle.sh available on demand)
 # > Toggle scratchpad
-bindsym $mod+s scratchpad show
+bindsym $mod+s exec $swayscripts/scratchpad-toggle.sh scratchpad show
 # > Send window to scratchpad
-bindsym $mod+Alt+s move scratchpad
+bindsym $mod+Alt+s exec $swayscripts/scratchpad-toggle.sh move scratchpad
 # > Toggle music scratchpad
-bindsym $mod+Alt+m [con_mark="music"] scratchpad show
+bindsym $mod+Alt+m exec $swayscripts/scratchpad-toggle.sh '[con_mark="music"] scratchpad show'
 # > Send window to music scratchpad
-bindsym $mod+Ctrl+Alt+m mark music; move scratchpad
+bindsym $mod+Ctrl+Alt+m exec $swayscripts/scratchpad-toggle.sh 'mark music; move scratchpad'
 # > Toggle terminal scratchpad
-bindsym $mod+Ctrl+Return [con_mark="terminal"] scratchpad show
+bindsym $mod+Ctrl+Return exec $swayscripts/scratchpad-toggle.sh '[con_mark="terminal"] scratchpad show'
 # > Send window to terminal scratchpad
-bindsym $mod+Ctrl+Shift+Return mark terminal; move scratchpad
+bindsym $mod+Ctrl+Shift+Return exec $swayscripts/scratchpad-toggle.sh 'mark terminal; move scratchpad'
 # Groups (sway has no Hyprland groups: tabbed ≈ grouped tabs)
 # > Toggle window group (tabbed)
 bindsym $mod+g layout tabbed
@@ -279,31 +291,33 @@ bindsym --locked Ctrl+Alt+Delete exec $swayscripts/window-close-all.sh
 # > Toggle waybar visibility
 bindsym $mod+Shift+space exec $swayscripts/waybar-toggle.sh
 
-# Resize (ported from the Hyprland resize-step binds; sway repeats while held)
-# > Shrink width
-bindsym $mod+minus resize shrink width 100 px
-# > Grow width
-bindsym $mod+equal resize grow width 100 px
-# > Shrink height
-bindsym $mod+Shift+minus resize shrink height 100 px
-# > Grow height
-bindsym $mod+Shift+equal resize grow height 100 px
-# > Shrink width (fine)
-bindsym $mod+Alt+minus resize shrink width 25 px
-# > Grow width (fine)
-bindsym $mod+Alt+equal resize grow width 25 px
-# > Shrink height (fine)
-bindsym $mod+Shift+Alt+minus resize shrink height 25 px
-# > Grow height (fine)
-bindsym $mod+Shift+Alt+equal resize grow height 25 px
-# > Shrink width (coarse)
-bindsym $mod+Ctrl+minus resize shrink width 300 px
-# > Grow width (coarse)
-bindsym $mod+Ctrl+equal resize grow width 300 px
-# > Shrink height (coarse)
-bindsym $mod+Ctrl+Shift+minus resize shrink height 300 px
-# > Grow height (coarse)
-bindsym $mod+Ctrl+Shift+equal resize grow height 300 px
+# Resize (absolute divider direction via resize-smart.sh: minus moves the
+# divider left/up, equal moves it right/down, regardless of focused pane;
+# sway repeats while held)
+# > Shrink width (divider left)
+bindsym $mod+minus exec $swayscripts/resize-smart.sh width shrink 100
+# > Grow width (divider right)
+bindsym $mod+equal exec $swayscripts/resize-smart.sh width grow 100
+# > Shrink height (divider up)
+bindsym $mod+Shift+minus exec $swayscripts/resize-smart.sh height shrink 100
+# > Grow height (divider down)
+bindsym $mod+Shift+equal exec $swayscripts/resize-smart.sh height grow 100
+# > Shrink width (fine, divider left)
+bindsym $mod+Alt+minus exec $swayscripts/resize-smart.sh width shrink 25
+# > Grow width (fine, divider right)
+bindsym $mod+Alt+equal exec $swayscripts/resize-smart.sh width grow 25
+# > Shrink height (fine, divider up)
+bindsym $mod+Shift+Alt+minus exec $swayscripts/resize-smart.sh height shrink 25
+# > Grow height (fine, divider down)
+bindsym $mod+Shift+Alt+equal exec $swayscripts/resize-smart.sh height grow 25
+# > Shrink width (coarse, divider left)
+bindsym $mod+Ctrl+minus exec $swayscripts/resize-smart.sh width shrink 300
+# > Grow width (coarse, divider right)
+bindsym $mod+Ctrl+equal exec $swayscripts/resize-smart.sh width grow 300
+# > Shrink height (coarse, divider up)
+bindsym $mod+Ctrl+Shift+minus exec $swayscripts/resize-smart.sh height shrink 300
+# > Grow height (coarse, divider down)
+bindsym $mod+Ctrl+Shift+equal exec $swayscripts/resize-smart.sh height grow 300
 
 # Workspaces 1-10
 # > Workspace 1

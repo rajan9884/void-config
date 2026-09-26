@@ -45,8 +45,11 @@ source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
 ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=#777777'
 
 # ── Tab completion (zsh-completions + compinit) ──
+# compinit's freshness check stats every fpath dir (~600ms); -C reuses the
+# dump (~30ms). Re-dump at most once a day so new completions still register.
 fpath=(/usr/share/zsh/site-functions $fpath)
-autoload -Uz compinit && compinit
+autoload -Uz compinit
+if [[ -n ${ZDOTDIR:-$HOME}/.zcompdump(#qN.mh+24) ]]; then compinit; else compinit -C; fi
 zstyle ':completion:*' menu select
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
 zstyle ':completion:*' verbose true

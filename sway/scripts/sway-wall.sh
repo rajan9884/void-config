@@ -116,5 +116,6 @@ if pgrep -x chromium >/dev/null 2>&1 || pgrep -x brave >/dev/null 2>&1 || pgrep 
     notify-send "Browser Theme Updated" "Restart Chromium/Brave to apply new colors" -i "$WALLPAPER"
 fi
 
-# 8. Done
-notify-send "Theme Updated" "Colors extracted from $(basename "$WALLPAPER")" -i "$WALLPAPER"
+# 8. Done (no "Theme Updated" popup: notifications stay silent on switch;
+# nvim/browser restart nudges above still fire when those apps run).
+true

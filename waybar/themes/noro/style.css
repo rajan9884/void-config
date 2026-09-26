@@ -189,24 +189,41 @@ window#waybar {
 /* Occupied workspaces (apps open): bright primary glyph */
 #workspaces button:not(.empty):not(.active):not(.focused) {
     color: @primary;
-    opacity: 1;
+    opacity: 0.65;
 }
-/* Focused workspace: filled pill, brightest */
+/* Focused workspace: glyph-only highlight, no pill background, no underline */
 #workspaces button.active,
 #workspaces button.focused {
-    color: @on_primary;
-    background: @primary;
-    border-color: @primary;
+    color: @primary;
+    background: transparent;
+    background-image: none;
+    border-color: transparent;
     opacity: 1;
+    box-shadow: none;
+    text-shadow: none;
 }
 #workspaces button.urgent {
     color: @error;
-    border-color: @error;
+    background: transparent;
+    background-image: none;
+    border-color: transparent;
+    box-shadow: none;
+    text-shadow: none;
     opacity: 1;
 }
 #workspaces button:hover {
-    color: @primary;
+    color: @on_surface;
+    background: transparent;
+    background-image: none;
+    box-shadow: none;
     opacity: 1;
+}
+#workspaces button.active:hover,
+#workspaces button.focused:hover {
+    color: @primary;
+    background: transparent;
+    background-image: none;
+    box-shadow: none;
 }
 
 #battery.charging {

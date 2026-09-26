@@ -1,0 +1,2 @@
+#!/bin/sh
+exec grim -g "`slurp`" - | wl-copy

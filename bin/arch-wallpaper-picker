@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# ──────────────────────────────────────────────
+#   arch-wallpaper-picker — quattro-style wallpaper picker.
+#   Horizontal thumbnail carousel over the single flat collection in
+#   ~/.local/share/wallpapers/Wallpaper/; the chosen image is applied
+#   through sway-wall.sh (set + matugen palette + reloads).
+# ──────────────────────────────────────────────
+
+WALL_DIR="$HOME/.local/share/wallpapers/Wallpaper"
+SWWW_SCRIPT="$HOME/.config/sway/scripts/sway-wall.sh"
+
+[ -d "$WALL_DIR" ] || { echo "Wallpaper directory not found: $WALL_DIR" >&2; exit 1; }
+
+image=$("$HOME/.local/bin/arch-menu-images" \
+  --show-labels --filterable --lazy-thumbnails "$WALL_DIR")
+
+[[ -n $image ]] && [[ -f $image ]] || exit 0
+
+"$SWWW_SCRIPT" "$image"

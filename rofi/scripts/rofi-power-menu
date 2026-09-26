@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+# Options
+shutdown="⏻ Shutdown"
+reboot=" Reboot"
+lock=" Lock"
+suspend="󰒲 Suspend"
+logout="󰗽 Logout"
+
+# Passed option
+chosen="$@"
+
+case ${chosen} in
+    $shutdown)
+        systemctl poweroff
+        ;;
+    $reboot)
+        systemctl reboot
+        ;;
+    $lock)
+        swaylock -f
+        ;;
+    $suspend)
+        systemctl suspend
+        ;;
+    $logout)
+        swaymsg exit
+        ;;
+    *)
+        echo "$lock"
+        echo "$suspend"
+        echo "$logout"
+        echo "$reboot"
+        echo "$shutdown"
+        ;;
+esac

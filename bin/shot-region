@@ -1,0 +1,2 @@
+#!/bin/sh
+exec grim -g "`slurp`" "$HOME/Pictures/Screenshots/shot-`date +%Y%m%d-%H%M%S`.png"

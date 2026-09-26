@@ -128,10 +128,10 @@ bindsym $mod+Alt+Return exec $term -e tmux
 bindsym $mod+Alt+k exec ~/.local/bin/menu-tmux-keybindings
 # > Music player (cliamp)
 bindsym $mod+Shift+Alt+m exec cliamp
-# > Docker (lazydocker)
-bindsym $mod+Shift+d exec lazydocker
-# > Open Obsidian
-bindsym $mod+Shift+o exec obsidian
+# > Docker (lazydocker) — disabled: lazydocker not installed (xbps-install lazydocker to enable)
+#bindsym $mod+Shift+d exec lazydocker
+# > Open Obsidian — disabled: obsidian not installed
+#bindsym $mod+Shift+o exec obsidian
 # > System monitor (btop)
 bindsym $mod+Ctrl+t exec $term -e btop
 # > Close window (graceful)

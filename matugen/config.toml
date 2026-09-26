@@ -14,21 +14,9 @@ output_path = "~/.config/kitty/colors.conf"
 input_path = "~/.config/matugen/templates/rofi.rasi"
 output_path = "~/.config/rofi/colors.rasi"
 
-[templates.pywalfox]
-input_path = "~/.config/matugen/templates/pywalfox.json"
-output_path = "~/.cache/wal/colors.json"
-
 [templates.antigravity]
 input_path = "~/.config/matugen/templates/antigravity.json"
 output_path = "~/.config/Antigravity/User/settings.json"
-
-[templates.brave]
-input_path = "~/.config/matugen/templates/brave.css"
-output_path = "~/.config/brave/colors.css"
-
-[templates.dolphin]
-input_path = "~/.config/matugen/templates/dolphin.colors"
-output_path = "~/.local/share/color-schemes/Matugen.colors"
 
 [templates.nvim]
 input_path = "~/.config/matugen/templates/nvim.lua"
@@ -81,10 +69,6 @@ output_path = "~/.config/starship.toml"
 [templates.sway]
 input_path = "~/.config/matugen/templates/sway-colors"
 output_path = "~/.config/sway/colors"
-
-[templates.mako]
-input_path = "~/.config/matugen/templates/mako-colors"
-output_path = "~/.config/mako/colors"
 
 [templates.swaylock]
 input_path = "~/.config/matugen/templates/swaylock-colors"

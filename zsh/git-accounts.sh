@@ -52,9 +52,14 @@ git-whoami() {
 }
 
 # Keep both SSH keys loaded without prompting every shell.
-if command -v ssh-add >/dev/null 2>&1; then
-  for k in "$HOME/.ssh/id_ed25519_work" "$HOME/.ssh/id_ed25519_personal"; do
-    [ -f "$k" ] && ssh-add -l 2>/dev/null | grep -q "$(ssh-keygen -lf "$k" 2>/dev/null | awk '{print $2}')" || ssh-add "$k" 2>/dev/null
-  done
-  unset k
+# Guarded: runs only when the agent is up AND holds zero identities, so
+# every subsequent shell/tab startup skips the ssh-add/ssh-keygen/grep/awk
+# subshell storm entirely.
+if [ -n "${SSH_AUTH_SOCK:-}" ] && command -v ssh-add >/dev/null 2>&1; then
+  if ! ssh-add -l >/dev/null 2>&1; then
+    for k in "$HOME/.ssh/id_ed25519_work" "$HOME/.ssh/id_ed25519_personal"; do
+      [ -f "$k" ] && ssh-add "$k" 2>/dev/null
+    done
+    unset k
+  fi
 fi

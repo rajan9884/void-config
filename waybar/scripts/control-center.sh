@@ -47,15 +47,17 @@ BT_STATE=$(get_bt)
 VOL_BAR=$(get_vol_bar)
 BRIGHT_BAR=$(get_bright_bar)
 
-# Clean, descriptive items for the tiles
-MENU="󰖩  Wi-Fi\n$WIFI_SSID\n"
-MENU+="󰂯  Bluetooth\n$BT_STATE\n"
-MENU+="󰃠  Brightness\n$BRIGHT_BAR\n"
-MENU+="󰕾  Sound\n$VOL_BAR\n"
-MENU+="󰔉  Focus\n$DND_STATE\n"
-MENU+="󰹑  Mirroring\nNone\n"
-MENU+="󰝚  Music\nNot Playing\n"
-MENU+="⏻  Power\nSystem"
+# One line per tile: rofi returns the clicked row verbatim, so a two-line
+# tile (label row + value row) breaks matching when the value row is
+# clicked. Status is appended inline instead.
+MENU="󰖩  Wi-Fi — $WIFI_SSID\n"
+MENU+="󰂯  Bluetooth — $BT_STATE\n"
+MENU+="󰃠  Brightness — $BRIGHT_BAR\n"
+MENU+="󰕾  Sound — $VOL_BAR\n"
+MENU+="󰔉  Focus — $DND_STATE\n"
+MENU+="󰹑  Mirroring — None\n"
+MENU+="󰝚  Music — Not Playing\n"
+MENU+="⏻  Power — System"
 
 CHOICE=$(echo -e "$MENU" | rofi -dmenu -p "macOS" -theme "$THEME" -i)
 

@@ -3,8 +3,8 @@
 set -euo pipefail
 STATE_FILE="/tmp/sway-gaps-off"
 if [ -f "$STATE_FILE" ]; then
-    swaymsg gaps inner current set 20 >/dev/null
-    swaymsg gaps outer current set 10 >/dev/null
+    swaymsg gaps inner current set 4 >/dev/null
+    swaymsg gaps outer current set 12 >/dev/null
     rm -f "$STATE_FILE"
     notify-send "Window" "Gaps restored"
 else

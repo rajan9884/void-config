@@ -10,7 +10,6 @@
 alias ls='ls --color=auto'
 alias grep='grep --color=auto'
 alias ff="fzf --preview 'bat --color=always {}'"
-alias nix-clean='nix-collect-garbage -d && nix store optimise && du -sh /nix'
 
 # Dual-GitHub helpers: git-work / git-personal / git-whoami
 [ -f "$HOME/.config/zsh/git-accounts.sh" ] && source "$HOME/.config/zsh/git-accounts.sh"

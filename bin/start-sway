@@ -16,13 +16,14 @@ export XDG_SESSION_TYPE=wayland
 export XDG_SESSION_DESKTOP=sway
 export ELECTRON_OZONE_PLATFORM_HINT=wayland
 
-# amd gpu specific
-export LIBVA_DRIVER_NAME=radeonsi
-export VDPAU_DRIVER=radeonsi #r300 for old hw
-
-# intel gpu specific
-#export LIBVA_DRIVER_NAME=iHD #i965 for old hw
+# intel gpu specific (this machine: 13th Gen Raptor Lake Iris Xe, iHD driver)
+export LIBVA_DRIVER_NAME=iHD #i965 for old hw
+unset VDPAU_DRIVER
 #export VDPAU_DRIVER=va_gl
+
+# amd gpu specific (NOT this machine — uncomment only on AMD hardware)
+#export LIBVA_DRIVER_NAME=radeonsi
+#export VDPAU_DRIVER=radeonsi #r300 for old hw
 
 # nvidia gpu specific
 #export LIBVA_DRIVER_NAME=nvidia #nouveau for foss type
@@ -40,22 +41,22 @@ export QT_WAYLAND_DISABLE_WINDOWDECORATION=1
 # xdg base dirs
 export XDG_CACHE_HOME="$HOME/.cache"
 export XDG_CONFIG_HOME="$HOME/.config"
-export XDG_CONFIG_DIRS="/etc/xdg:$PATH"
+export XDG_CONFIG_DIRS="${XDG_CONFIG_DIRS:-/etc/xdg}"
 export XDG_DATA_HOME="$HOME/.local/share"
 export XDG_STATE_HOME="$HOME/.local/state"
 
-# xdg user dirs
-export XDG_DESKTOP_DIR="$HOME/nextcloud/desktop"
-export XDG_DOCUMENTS_DIR="$HOME/nextcloud/documents"
-export XDG_DOWNLOAD_DIR="$HOME/nextcloud/downloads"
-export XDG_MUSIC_DIR="$HOME/nextcloud/music"
-export XDG_PICTURES_DIR="$HOME/nextcloud/pictures"
-export XDG_PUBLICSHARE_DIR="$HOME/nextcloud/public"
-export XDG_TEMPLATES_DIR="$HOME/nextcloud/templates"
-export XDG_VIDEOS_DIR="$HOME/nextcloud/videos"
+# xdg user dirs (standard locations, matching ~/.config/user-dirs.dirs)
+export XDG_DESKTOP_DIR="$HOME/Desktop"
+export XDG_DOCUMENTS_DIR="$HOME/Documents"
+export XDG_DOWNLOAD_DIR="$HOME/Downloads"
+export XDG_MUSIC_DIR="$HOME/Music"
+export XDG_PICTURES_DIR="$HOME/Pictures"
+export XDG_PUBLICSHARE_DIR="$HOME/Public"
+export XDG_TEMPLATES_DIR="$HOME/Templates"
+export XDG_VIDEOS_DIR="$HOME/Videos"
 
-# start swayfx
+# start swayfx (single session bus: pipewire is spawned by sway itself,
+# so everything shares one bus — never nest dbus-run-session twice)
 if [ "$(tty)" = "/dev/tty1" ]; then
-  dbus-run-session -- pipewire &
   exec dbus-run-session -- sway
 fi

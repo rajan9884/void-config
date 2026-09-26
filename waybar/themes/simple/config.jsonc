@@ -54,7 +54,7 @@
         "format-icons": {
             "default": ["󰕿", "󰖀", "󰕾"]
         },
-        "on-click": "kitty --class wiremix -e wiremix"
+        "on-click": "kitty --class pulsemixer -e pulsemixer"
     },
 
     "bluetooth": {

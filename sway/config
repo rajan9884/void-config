@@ -48,17 +48,16 @@ exec dbus-update-activation-environment --all
 # Starting wireplumber manually as well creates a duplicate session
 # manager and wedges PipeWire (no audio, pactl/wpctl hang).
 exec sh -c "pkill -x pipewire-pulse; pkill -x wireplumber; pkill -x pipewire; sleep 1; exec pipewire"
-exec sh -c "for i in $(seq 1 25); do timeout 1 pactl info >/dev/null 2>&1 && break; sleep 0.2; done; exec easyeffects --service-mode"
 # Backlight persistence: kernel resets intel_backlight at boot; restore last saved value.
 exec sh -c 'B=$(cat "${XDG_STATE_HOME:-$HOME/.local/state}/backlight" 2>/dev/null); case "$B" in ""|*[!0-9]*) ;; *) brightnessctl -c backlight set "$B" >/dev/null 2>&1 || true;; esac'
 exec /usr/libexec/polkit-gnome-authentication-agent-1
 exec awww-daemon
 exec $swayscripts/init-wallpaper.sh
 exec swayidle -w -C ~/.config/sway/swayidle.conf
-# Wait for the PipeWire/Pulse server before starting waybar — otherwise the
-# pulseaudio module initializes against a dead server and stays hidden
-# until the next restart (volume module "gone after reboot").
-exec sh -c "for i in $(seq 1 25); do timeout 1 pactl info >/dev/null 2>&1 && break; sleep 0.2; done; exec waybar -c ~/.config/waybar/config.jsonc -s ~/.config/waybar/style.css"
+# Gated, single-instance waybar launch (see waybar-launch.sh): waits for a
+# real default sink so the pulseaudio module never initializes hidden, and
+# serializes with sway-wall.sh's fallback so boot never stacks two bars.
+exec ~/.config/sway/scripts/waybar-launch.sh
 exec sh -c "pgrep -x swayosd-server >/dev/null || exec swayosd-server"
 exec swaync
 exec nm-applet
@@ -70,7 +69,8 @@ exec sh -c "sleep 3 && ~/.local/bin/power-profiles autodetect"
 # Login terminal doubles as the kitty single-instance daemon: it pays the
 # ~1.1s Python startup once here, then every Super+Return opens via
 # `kitty @ launch` (~100ms) through terminal-launch.sh.
-exec $term -o allow_remote_control=yes --listen-on unix:$XDG_RUNTIME_DIR/kitty.sock
+# `zsh -l` makes it a login shell so ~/.zshrc prints fastfetch on startup.
+exec $term -o allow_remote_control=yes --listen-on unix:$XDG_RUNTIME_DIR/kitty.sock zsh -l
 
 ### Look & feel  (sway) ###
 font pango:JetBrainsMono Nerd Font 10

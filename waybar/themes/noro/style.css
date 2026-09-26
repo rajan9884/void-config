@@ -186,14 +186,11 @@ window#waybar {
     padding: 0 6px;
     border-radius: 8px;
 }
-/* Occupied workspaces (apps open): bright primary glyph */
-#workspaces button:not(.empty):not(.active):not(.focused) {
-    color: @primary;
-    opacity: 0.65;
-}
-/* Focused workspace: glyph-only highlight, no pill background, no underline */
+/* Occupied (apps open) + focused (current): same intensity, glyph-only */
+#workspaces button:not(.empty):not(.active):not(.focused),
 #workspaces button.active,
-#workspaces button.focused {
+#workspaces button.focused,
+#workspaces button.visible {
     color: @primary;
     background: transparent;
     background-image: none;

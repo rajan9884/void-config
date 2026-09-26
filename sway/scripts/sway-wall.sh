@@ -94,7 +94,10 @@ if pgrep -x waybar >/dev/null 2>&1; then
 elif pgrep -x .waybar-wrapped >/dev/null 2>&1; then
     pkill -USR2 -x .waybar-wrapped 2>/dev/null || true
 else
-    setsid waybar -c ~/.config/waybar/config.jsonc -s ~/.config/waybar/style.css >/dev/null 2>&1 < /dev/null &
+    # Single-instance gated launch (shared with sway's autostart): waits
+    # for the default sink and skips if a bar is already up, so this can
+    # never stack a duplicate or a module-less bar at boot.
+    ~/.config/sway/scripts/waybar-launch.sh >/dev/null 2>&1 < /dev/null &
 fi
 
 # 4. Reload kitty

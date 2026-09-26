@@ -18,7 +18,7 @@ get_bt() {
 }
 
 get_vol_bar() {
-    local vol=$(pamixer --get-volume)
+    local vol=$(wpctl get-volume | awk '{ print int($2*100) }')
     local filled=$((vol / 10))
     local bar=""
     # Using specific Nerd Font block characters
@@ -69,7 +69,7 @@ case "$CHOICE" in
     *"Brightness"*)
         brightnessctl set +10% ;;
     *"Sound"*)
-        kitty --class wiremix -e wiremix ;;
+        kitty --class pulsemixer -e pulsemixer ;;
     *"Focus"*)
         swaync-client -d -sw ;;
     *"Power"*)

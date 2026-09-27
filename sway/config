@@ -203,14 +203,14 @@ bindsym $mod+Right focus right
 bindsym $mod+Up focus up
 # > Focus down (arrow)
 bindsym $mod+Down focus down
-# > Swap window left
-bindsym $mod+Shift+Left move left
-# > Swap window right
-bindsym $mod+Shift+Right move right
-# > Swap window up
-bindsym $mod+Shift+Up move up
-# > Swap window down
-bindsym $mod+Shift+Down move down
+# > Swap window left (true position swap, layout-preserving)
+bindsym $mod+Shift+Left exec $swayscripts/swap-directional.sh left
+# > Swap window right (true position swap, layout-preserving)
+bindsym $mod+Shift+Right exec $swayscripts/swap-directional.sh right
+# > Swap window up (true position swap, layout-preserving)
+bindsym $mod+Shift+Up exec $swayscripts/swap-directional.sh up
+# > Swap window down (true position swap, layout-preserving)
+bindsym $mod+Shift+Down exec $swayscripts/swap-directional.sh down
 # > Toggle window floating/tiling
 bindsym $mod+t floating toggle
 # > Pop window out (float + pin)

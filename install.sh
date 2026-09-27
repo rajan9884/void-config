@@ -157,7 +157,7 @@ link() { # link <source-in-repo> <destination>
 
 if [ "$DO_LINKS" -eq 1 ]; then
     log "Linking ~/.config directories (backups go to $BACKUP_DIR)"
-    for d in foot gtk-3.0 gtk-4.0 kitty matugen nvim pipewire rofi sway swaync \
+    for d in foot gtk-3.0 gtk-4.0 matugen nvim pipewire rofi sway swaync \
              swayosd waybar wireplumber xdg-desktop-portal zsh; do
         [ -e "$REPO_DIR/$d" ] && link "$REPO_DIR/$d" "$HOME/.config/$d"
     done

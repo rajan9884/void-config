@@ -66,11 +66,9 @@ exec autotiling
 exec sh -c "gsettings set org.gnome.desktop.interface color-scheme prefer-dark 2>/dev/null || true"
 exec sh -c "wl-paste --watch cliphist store"
 exec sh -c "sleep 3 && ~/.local/bin/power-profiles autodetect"
-# Login terminal: foot starts instantly (native C, no daemon needed —
-# unlike kitty's ~1.1s Python startup that required a --listen-on daemon
-# plus `kitty @ launch` via terminal-launch.sh). Plain `foot` also re-reads
-# ~/.config/foot/colors.ini on every launch, so matugen re-themes apply to
-# new windows without restarting a server.
+# Login terminal: plain `foot` starts instantly (native C, no daemon).
+# It re-reads ~/.config/foot/colors.ini on every launch, so matugen
+# re-themes apply to new windows without restarting a server.
 exec foot
 
 ### Look & feel  (sway) ###
@@ -461,6 +459,8 @@ bindsym $mod+c exec $swayscripts/universal-clipboard.sh copy
 bindsym $mod+v exec $swayscripts/universal-clipboard.sh paste
 # > Universal cut
 bindsym $mod+x exec $swayscripts/universal-clipboard.sh cut
+# > Universal select all
+bindsym $mod+a exec $swayscripts/universal-clipboard.sh select-all
 
 ### Notifications (swaync panel) ###
 # > Close last notification

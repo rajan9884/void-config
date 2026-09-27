@@ -65,7 +65,6 @@ The script is idempotent; re-running it repairs anything missing.
 | `waybar/` | `~/.config/waybar` | Status bar config, themes, module scripts |
 | `rofi/` | `~/.config/rofi` | Application launcher and menus |
 | `foot/` | `~/.config/foot` | Terminal configuration (matugen-themed) |
-| `kitty/` | `~/.config/kitty` | Fallback terminal (kept installed, no longer referenced) |
 | `nvim/` | `~/.config/nvim` | Neovim configuration |
 | `swaync/` | `~/.config/swaync` | Notification center |
 | `swayosd/` | `~/.config/swayosd` | On-screen display for volume/brightness |
@@ -88,7 +87,7 @@ wallpaper pointer, etc.) are git-ignored; the templates under
 
 Wallpaper drives the theme. `sway/scripts/sway-wall.sh <image>` records
 the wallpaper, stages the lock-screen background, and runs matugen, which
-recolors Waybar, Rofi, Foot (plus kept Kitty fallback), Sway, SwayNC, SwayOSD, GTK, and Starship in
+recolors Waybar, Rofi, Foot, Sway, SwayNC, SwayOSD, GTK, and Starship in
 one pass. Related helpers: `wall-selector`, `random-wall.sh`,
 `init-wallpaper.sh` (restores the last wallpaper at login).
 

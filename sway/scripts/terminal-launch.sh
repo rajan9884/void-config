@@ -2,8 +2,8 @@
 # Open a new foot terminal in the working directory of the currently
 # focused window (sway/Void port — uses swaymsg, not hyprctl).
 # Fast path: one swaymsg + one jq + one ps snapshot, zero forks per process.
-# Foot starts instantly (native C), so no single-instance daemon is needed
-# (unlike kitty's `kitty @ launch` flow): every launch is a cold `foot -D`.
+# Foot starts instantly (native C), so no single-instance daemon is needed:
+# every launch is a cold `foot -D`.
 set -u
 dir="$HOME"
 pid="$(swaymsg -t get_tree 2>/dev/null | jq -r '.. | objects | select(.focused == true) | .pid // empty' 2>/dev/null | head -n 1 || true)"

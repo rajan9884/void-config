@@ -8,7 +8,10 @@
 #   through the full sway-wall.sh switch so image and theme agree.
 # ──────────────────────────────────────────────
 set -u
-WALL_DIR="$HOME/.local/share/wallpapers"
+WALL_DIRS=()
+for _d in "$HOME/.local/share/wallpapers" "$HOME/Pictures/Wallpapers"; do
+    [ -d "$_d" ] && WALL_DIRS+=("$_d")
+done
 
 # Exactly one daemon: clear leftovers first (a second daemon started
 # while the login one is still coming up ends up painting over/under
@@ -24,7 +27,10 @@ done
 if [ -s "$HOME/.cache/current-wallpaper" ] && [ -f "$(<"$HOME/.cache/current-wallpaper")" ]; then
     exec "$HOME/.config/sway/scripts/sway-wall.sh" "$(<"$HOME/.cache/current-wallpaper")"
 fi
-WALL=$(find "$WALL_DIR" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) 2>/dev/null | sort | head -n 1)
+WALL=""
+if ((${#WALL_DIRS[@]})); then
+    WALL=$(find "${WALL_DIRS[@]}" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) 2>/dev/null | sort | head -n 1 || true)
+fi
 if [ -n "${WALL:-}" ]; then
     exec "$HOME/.config/sway/scripts/sway-wall.sh" "$WALL"
 else

@@ -111,16 +111,11 @@ wl-clipboard
 wlr-randr
 wlsunset
 wtype
-xauth
 xdg-desktop-portal
 xdg-desktop-portal-gnome
 xdg-desktop-portal-gtk
 xdg-desktop-portal-wlr
 xdg-user-dirs
-xinput
-xorg-fonts
-xrandr
-xsettingsd
 yazi
 yt-dlp
 zoxide

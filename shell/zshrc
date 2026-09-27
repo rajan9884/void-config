@@ -8,7 +8,8 @@
 alias ls='ls --color=auto'
 alias grep='grep --color=auto'
 alias ff="fzf --preview 'bat --color=always {}'"
-
+alias ll='ls -lt'
+alias ..='cd ../'
 # Dual-GitHub helpers: git-work / git-personal / git-whoami
 [ -f "$HOME/.config/zsh/git-accounts.sh" ] && source "$HOME/.config/zsh/git-accounts.sh"
 

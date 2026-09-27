@@ -43,9 +43,10 @@ else
     fi
 fi
 
-# 1.5 Record current wallpaper + stage lock-screen background.
-printf '%s' "$WALLPAPER" > ~/.cache/current-wallpaper
-(magick "$WALLPAPER" ~/.cache/swaylock-bg.jpg 2>/dev/null || cp -p "$WALLPAPER" ~/.cache/swaylock-bg.jpg 2>/dev/null) & disown 2>/dev/null || true
+# 1.5 Record current wallpaper + stage lock-screen background (synchronous so
+#    Super+R immediately followed by Super+Ctrl+L already shows the new image).
+printf '%s' "$WALLPAPER" > "$HOME/.cache/current-wallpaper"
+magick "$WALLPAPER" "$HOME/.cache/swaylock-bg.jpg" 2>/dev/null || cp -p "$WALLPAPER" "$HOME/.cache/swaylock-bg.jpg" 2>/dev/null || true
 
 # 2. Extract colors with matugen (updates waybar, rofi, kitty, sway, swaync, …)
 matugen image "$WALLPAPER" --type scheme-content -c ~/.config/matugen/config.toml --source-color-index 0

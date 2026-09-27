@@ -48,6 +48,10 @@ exec dbus-update-activation-environment --all
 # Starting wireplumber manually as well creates a duplicate session
 # manager and wedges PipeWire (no audio, pactl/wpctl hang).
 exec sh -c "pkill -x pipewire-pulse; pkill -x wireplumber; pkill -x pipewire; sleep 1; exec pipewire"
+# Portal backends need PipeWire up (else the wlr backend exits at first
+# activation and screen sharing stays down until retried): wait for the
+# socket, then pre-start the wlr/gtk backends (see portal-warmup.sh).
+exec $swayscripts/portal-warmup.sh
 # Backlight persistence: kernel resets intel_backlight at boot; restore last saved value.
 exec sh -c 'B=$(cat "${XDG_STATE_HOME:-$HOME/.local/state}/backlight" 2>/dev/null); case "$B" in ""|*[!0-9]*) ;; *) brightnessctl -c backlight set "$B" >/dev/null 2>&1 || true;; esac'
 exec /usr/libexec/polkit-gnome-authentication-agent-1

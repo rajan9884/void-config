@@ -11,10 +11,10 @@ set $left h
 set $up k
 set $down j
 set $right l
-set $term kitty
+set $term foot
 set $menu rofi -show drun -theme ~/.config/rofi/active-launcher.rasi
 set $browser ~/.local/bin/chromium
-set $editor kitty -e nvim
+set $editor foot -e nvim
 set $file ~/.local/bin/nautilus-gnome
 set $swayscripts ~/.config/sway/scripts
 
@@ -66,11 +66,12 @@ exec autotiling
 exec sh -c "gsettings set org.gnome.desktop.interface color-scheme prefer-dark 2>/dev/null || true"
 exec sh -c "wl-paste --watch cliphist store"
 exec sh -c "sleep 3 && ~/.local/bin/power-profiles autodetect"
-# Login terminal doubles as the kitty single-instance daemon: it pays the
-# ~1.1s Python startup once here, then every Super+Return opens via
-# `kitty @ launch` (~100ms) through terminal-launch.sh.
-# `zsh -l` makes it a login shell so ~/.zshrc prints fastfetch on startup.
-exec $term -o allow_remote_control=yes --listen-on unix:$XDG_RUNTIME_DIR/kitty.sock zsh -l
+# Login terminal: foot starts instantly (native C, no daemon needed —
+# unlike kitty's ~1.1s Python startup that required a --listen-on daemon
+# plus `kitty @ launch` via terminal-launch.sh). Plain `foot` also re-reads
+# ~/.config/foot/colors.ini on every launch, so matugen re-themes apply to
+# new windows without restarting a server.
+exec foot
 
 ### Look & feel  (sway) ###
 font pango:JetBrainsMono Nerd Font 10
@@ -85,8 +86,8 @@ gaps inner 4
 gaps outer 12
 smart_borders on
 smart_gaps off
-# Blur off systemwide — transparency comes from app opacity (e.g. kitty
-# background_opacity), not the blur pass. Tuning lines kept so blur can be
+# Blur off systemwide — transparency comes from app opacity (e.g. foot
+# [colors-dark] alpha), not the blur pass. Tuning lines kept so blur can be
 # re-enabled with one word if ever wanted.
 blur disable
 blur_xray enable
@@ -122,7 +123,7 @@ bindsym $mod+Shift+Return exec $browser
 bindsym $mod+Shift+f exec $file
 # > Open private browser window
 bindsym $mod+Shift+Alt+b exec $browser --incognito
-# > Open editor (kitty + nvim)
+# > Open editor (foot + nvim)
 bindsym $mod+Shift+n exec $editor
 # > Open terminal with tmux
 bindsym $mod+Alt+Return exec $term -e tmux

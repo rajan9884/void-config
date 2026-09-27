@@ -112,7 +112,7 @@
             ]
         },
         "scroll-step": 5,
-        "on-click": "kitty --class pulsemixer -e pulsemixer",
+        "on-click": "foot --app-id=pulsemixer -e pulsemixer",
         "on-click-right": "pactl set-sink-mute @DEFAULT_SINK@ toggle",
         "tooltip": false
     },

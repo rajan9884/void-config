@@ -157,7 +157,7 @@ link() { # link <source-in-repo> <destination>
 
 if [ "$DO_LINKS" -eq 1 ]; then
     log "Linking ~/.config directories (backups go to $BACKUP_DIR)"
-    for d in gtk-3.0 gtk-4.0 kitty matugen nvim pipewire rofi sway swaync \
+    for d in foot gtk-3.0 gtk-4.0 kitty matugen nvim pipewire rofi sway swaync \
              swayosd waybar wireplumber xdg-desktop-portal zsh; do
         [ -e "$REPO_DIR/$d" ] && link "$REPO_DIR/$d" "$HOME/.config/$d"
     done
@@ -216,7 +216,7 @@ log "Done."
 if [ ! -s "$HOME/.cache/current-wallpaper" ]; then
     warn "No wallpaper selected yet: put images in ~/.local/share/wallpapers, then run"
     warn "  ~/.config/sway/scripts/sway-wall.sh ~/path/to/wallpaper.jpg"
-    warn "to generate the matugen theme (waybar/rofi/kitty/starship follow it)."
+    warn "to generate the matugen theme (waybar/rofi/foot/starship follow it)."
 fi
 cat <<'EOF'
 [install] Not covered by this script (see README.md):

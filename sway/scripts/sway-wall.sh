@@ -48,7 +48,7 @@ fi
 printf '%s' "$WALLPAPER" > "$HOME/.cache/current-wallpaper"
 magick "$WALLPAPER" "$HOME/.cache/swaylock-bg.jpg" 2>/dev/null || cp -p "$WALLPAPER" "$HOME/.cache/swaylock-bg.jpg" 2>/dev/null || true
 
-# 2. Extract colors with matugen (updates waybar, rofi, kitty, sway, swaync, …)
+# 2. Extract colors with matugen (updates waybar, rofi, foot, kitty, sway, swaync, …)
 matugen image "$WALLPAPER" --type scheme-content -c ~/.config/matugen/config.toml --source-color-index 0
 
 # 2.1 Restart swayosd-server so it picks up the new style.css (reads CSS only at startup).
@@ -101,7 +101,11 @@ else
     ~/.config/sway/scripts/waybar-launch.sh >/dev/null 2>&1 < /dev/null &
 fi
 
-# 4. Reload kitty
+# 4. Reload terminals for the new palette.
+# kitty (kept installed as fallback) hot-reloads via SIGUSR1; foot has no
+# live-reload (SIGUSR1/2 only switch dark/light themes loaded at startup),
+# so existing foot windows keep the old colors until restarted while every
+# NEW foot window reads the fresh ~/.config/foot/colors.ini automatically.
 killall -SIGUSR1 kitty 2>/dev/null || true
 
 # 5. Reload swaync with new colors (matugen writes ~/.config/swaync/style.css)

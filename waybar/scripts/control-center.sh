@@ -63,13 +63,13 @@ CHOICE=$(echo -e "$MENU" | rofi -dmenu -p "macOS" -theme "$THEME" -i)
 
 case "$CHOICE" in
     *"Wi-Fi"*)
-        kitty -e nmtui ;;
+        foot -e nmtui ;;
     *"Bluetooth"*)
         ~/.config/waybar/scripts/bluetooth-menu.sh ;;
     *"Brightness"*)
         brightnessctl set +10% ;;
     *"Sound"*)
-        kitty --class pulsemixer -e pulsemixer ;;
+        foot --app-id=pulsemixer -e pulsemixer ;;
     *"Focus"*)
         swaync-client -d -sw ;;
     *"Power"*)

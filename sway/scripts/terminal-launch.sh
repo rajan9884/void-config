@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-# Open a new terminal in the working directory of the currently focused
-# window (sway/Void port of terminal-launch.sh — uses swaymsg, not hyprctl).
-# Fast path: one swaymsg + one jq + one ps snapshot, zero forks per process
-# (the old pgrep/ps-per-node BFS cost ~170ms before kitty even started).
+# Open a new foot terminal in the working directory of the currently
+# focused window (sway/Void port — uses swaymsg, not hyprctl).
+# Fast path: one swaymsg + one jq + one ps snapshot, zero forks per process.
+# Foot starts instantly (native C), so no single-instance daemon is needed
+# (unlike kitty's `kitty @ launch` flow): every launch is a cold `foot -D`.
 set -u
 dir="$HOME"
 pid="$(swaymsg -t get_tree 2>/dev/null | jq -r '.. | objects | select(.focused == true) | .pid // empty' 2>/dev/null | head -n 1 || true)"
@@ -39,12 +40,14 @@ if [[ -n "${pid:-}" ]] && [[ "$pid" =~ ^[0-9]+$ ]]; then
         [[ -n "$cwd" && -d "$cwd" ]] && dir="$cwd"
     fi
 fi
-# Prefer the login kitty daemon (~100ms remote open); fall back to a cold
-# launch if it isn't up yet (slow once, still opens). The fallback carries
-# the listener flags so it becomes the new anchor — a taken socket is
-# ignored harmlessly, so this is safe when a daemon is already up.
-SOCK="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/kitty.sock"
-if [[ -S "$SOCK" ]] && kitty @ --to "unix:$SOCK" launch --type=os-window --cwd="$dir" >/dev/null 2>&1; then
+# Prefer footclient when a `foot --server` is running (shares fonts/glyph
+# cache); fall back to a plain cold launch otherwise. The plain launch
+# re-reads ~/.config/foot/colors.ini, so matugen re-themes always apply to
+# new windows (server clients inherit the server's startup palette until it
+# restarts — plain foot is therefore the default path).
+FOOT_SOCK="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/foot-$WAYLAND_DISPLAY.sock"
+if [[ -S "$FOOT_SOCK" ]] && command -v footclient >/dev/null 2>&1 \
+    && footclient -D "$dir" >/dev/null 2>&1; then
     exit 0
 fi
-exec kitty -o allow_remote_control=yes --listen-on "unix:$SOCK" --directory "$dir"
+exec foot -D "$dir"

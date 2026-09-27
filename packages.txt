@@ -47,6 +47,7 @@ imv
 intel-ucode
 intel-video-accel
 jq
+foot
 kitty
 libllvm22
 libva-utils

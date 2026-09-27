@@ -3,7 +3,9 @@
 set -euo pipefail
 
 terminal_pid=$(swaymsg -t get_tree 2>/dev/null | jq -r '.. | objects | select(.focused == true) | .pid // empty' 2>/dev/null | head -n 1 || true)
-# Kitty single-instance daemon socket (login kitty carries --listen-on).
+# Preferred terminal is foot (no remote-control socket, so cwd comes from
+# /proc below). When running under the kept kitty fallback, try its
+# single-instance daemon socket first (login kitty carried --listen-on).
 # The old arch-kitty-$pid name no longer exists; try the live daemon
 # socket first, fall back to the /proc PID tree.
 kitty_socket="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/kitty.sock"

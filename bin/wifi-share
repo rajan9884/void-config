@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Share the active Wi-Fi network via QR code + password.
-# Renders with kitty icat (or chafa fallback).
+# Renders with kitty icat when running under kitty, sixel/chafa image
+# preview under foot, otherwise chafa fallback.
 #
 # Usage: wifi-share [interface] [--password] [--copy]
 #   no flags  -> show QR + details, copy password to clipboard

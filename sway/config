@@ -83,7 +83,7 @@ titlebar_padding 10
 titlebar_border_thickness 2
 # Pure Wayland: never start Xwayland (no Xorg, no X11 backend).
 xwayland disable
-corner_radius 8
+corner_radius 12
 gaps inner 4
 gaps outer 12
 # Always draw borders, even with a single window visible (`on` hides the
@@ -100,16 +100,21 @@ blur_radius 4
 default_dim_inactive 0.12
 shadows enable
 shadow_blur_radius 8
-shadow_color #0000007F
+shadow_color #00000028
 
 floating_modifier $mod normal
 mouse_warping container
 focus_follows_mouse yes
 workspace_layout default
 
+# VS Code: whisper of transparency (Arch parity: code-translucent 0.92/0.88;
+# sway takes a single value — active 0.92 wins, same as foot).
+for_window [app_id="^(code|Code|code-oss)$"] opacity 0.92
 # Floating popups: GNOME Text Editor + Nautilus preview (sushi)
 for_window [app_id="org.gnome.TextEditor"] floating enable, resize set 900 650, move position center
 for_window [app_id="org.gnome.NautilusPreviewer"] floating enable, resize set 800 600, move position center
+# FileChooser portal (Chromium upload/open): otherwise tiles fullscreen
+for_window [app_id="xdg-desktop-portal-gtk"] floating enable, resize set 900 650, move position center
 
 # Lid close locks (ported from the Hyprland lid-switch bind)
 bindswitch lid:on exec $swayscripts/lid-close.sh # Lock on lid close

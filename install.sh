@@ -83,7 +83,7 @@ if [ "$DO_PACKAGES" -eq 1 ]; then
     fi
     log "Syncing repositories and installing $(grep -c . "$PACKAGES_FILE") packages (this takes a while)"
     # shellcheck disable=SC2046
-    "$PRIV" xbps-install -Sy $(grep -v '^[[:space:]]*#' "$PACKAGES_FILE" | grep -v '^[[:space:]]*$' | tr '\n' ' ')
+    "$PRIV" xbps-install -Syu $(grep -v '^[[:space:]]*#' "$PACKAGES_FILE" | grep -v '^[[:space:]]*$' | tr '\n' ' ')
 
     log "Enabling services"
     for svc in NetworkManager bluetoothd chronyd cronie dbus greetd polkitd \
@@ -124,7 +124,7 @@ EOF
         fi
     done
 
-    command -v ufw >/dev/null 2>&1 && "$PRIV" ufw enable || true
+    command -v ufw >/dev/null 2>&1 && "$PRIV" ufw --force enable || true
     command -v xdg-user-dirs-update >/dev/null 2>&1 && xdg-user-dirs-update || true
 fi
 
@@ -157,11 +157,12 @@ link() { # link <source-in-repo> <destination>
 
 if [ "$DO_LINKS" -eq 1 ]; then
     log "Linking ~/.config directories (backups go to $BACKUP_DIR)"
-    for d in foot gtk-3.0 gtk-4.0 matugen nvim pipewire rofi sway swaync \
-             swayosd waybar wireplumber xdg-desktop-portal zsh; do
+    for d in btop foot gtk-3.0 gtk-4.0 matugen nvim rofi sway swaylock swaync \
+             swayosd waybar xdg-desktop-portal zsh; do
         [ -e "$REPO_DIR/$d" ] && link "$REPO_DIR/$d" "$HOME/.config/$d"
     done
     [ -f "$REPO_DIR/starship.toml" ] && link "$REPO_DIR/starship.toml" "$HOME/.config/starship.toml"
+    [ -f "$REPO_DIR/mimeapps.list" ] && link "$REPO_DIR/mimeapps.list" "$HOME/.config/mimeapps.list"
 
     log "Linking shell startup files"
     link "$REPO_DIR/shell/bash_profile" "$HOME/.bash_profile"

@@ -26,6 +26,7 @@ evince
 eza
 fastfetch
 fd
+fetch
 ffmpeg6
 flavours
 font-misc-misc
@@ -44,13 +45,16 @@ gvfs-mtp
 gvfs-smb
 hyprpicker
 imv
+ImageMagick
 intel-ucode
 intel-video-accel
 jq
 foot
 libllvm22
 libva-utils
-linux
+linux-mainline
+linux-mainline-headers
+lsof
 matugen
 mesa
 mesa-demos
@@ -98,6 +102,7 @@ terminus-font
 tesseract-ocr
 tesseract-ocr-eng
 tmux
+tree
 tuigreet
 udisks2
 ufw
@@ -105,6 +110,7 @@ upower
 vim
 void-repo-multilib
 void-repo-nonfree
+vsv
 wf-recorder
 wl-clip-persist
 wl-clipboard

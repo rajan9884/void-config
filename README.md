@@ -25,6 +25,7 @@ Partial runs:
 ./install.sh --packages-only   # XBPS packages + services only
 ./install.sh --links-only      # (re)create symlinks only
 ./install.sh --no-fonts        # skip the Nerd Font download
+./install.sh --no-wallpapers   # skip the wallpaper collection download
 ```
 
 Reboot after the first run so group membership (`input`, `video`) and the
@@ -53,7 +54,12 @@ Sway session, and the desktop starts.
    automatically on TTY1 via `shell/zprofile`.
 6. **Fonts** — downloads JetBrainsMono Nerd Font and NerdFontsSymbolsOnly
    into `~/.local/share/fonts` (skipped if already present).
-7. **Directories** — creates `~/.local/share/wallpapers` and `~/.cache`.
+7. **Wallpapers** — clones the
+   [wallpapers](https://github.com/rajan9884/wallpapers) collection,
+   flattens every image into `~/.local/share/wallpapers` (existing
+   files are kept, the clone is deleted), and seeds the matugen theme
+   from a random wallpaper when no theme exists yet.
+8. **Directories** — creates `~/.local/share/wallpapers` and `~/.cache`.
 
 The script is idempotent; re-running it repairs anything missing.
 
@@ -97,8 +103,9 @@ one pass. Related helpers: `wall-selector`, `random-wall.sh`,
 
 These depend on personal accounts or third-party binaries:
 
-- **Wallpaper** — copy images to `~/.local/share/wallpapers`, then run
-  `~/.config/sway/scripts/sway-wall.sh <image>` once to seed the theme.
+- **Wallpaper** — already seeded by the installer (collection + random
+  pick). To switch later, copy images to `~/.local/share/wallpapers`,
+  then run `~/.config/sway/scripts/sway-wall.sh <image>`.
 - **Zen Browser** — build the `zen-browser-bin` AUR package with
   [vay](https://github.com/rajan9884/vay), then install the resulting
   `xbps` package from the local repository.

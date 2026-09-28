@@ -11,6 +11,7 @@
 #   --packages-only   install XBPS packages and enable services, skip dotfile links
 #   --links-only      only (re)create ~/.config ~/ ~/.local/bin symlinks
 #   --no-fonts        skip the Nerd Font download step
+#   --no-wallpapers   skip the wallpaper collection download step
 #   -h, --help        show this help and exit
 #
 # The script is idempotent: re-running it repairs missing links/packages.
@@ -26,12 +27,14 @@ BACKUP_DIR="$HOME/.config-backup-void-$(date +%Y%m%d-%H%M%S)"
 DO_PACKAGES=1
 DO_LINKS=1
 DO_FONTS=1
+DO_WALLPAPERS=1
 
 for arg in "$@"; do
     case "$arg" in
         --packages-only) DO_LINKS=0 ;;
-        --links-only) DO_PACKAGES=0; DO_FONTS=0 ;;
+        --links-only) DO_PACKAGES=0; DO_FONTS=0; DO_WALLPAPERS=0 ;;
         --no-fonts) DO_FONTS=0 ;;
+        --no-wallpapers) DO_WALLPAPERS=0 ;;
         -h|--help)
             sed -n '2,/^$/p' "$0" | sed 's/^# \{0,1\}//'
             exit 0
@@ -214,12 +217,41 @@ if [ "$DO_FONTS" -eq 1 ]; then
     fi
 fi
 
+# ------------------------------------------------------------- wallpapers ---
+if [ "$DO_WALLPAPERS" -eq 1 ]; then
+    WALL_DIR="$HOME/.local/share/wallpapers"
+    mkdir -p "$WALL_DIR"
+    if [ "$(find "$WALL_DIR" -type f | head -1)" ]; then
+        log "Wallpapers already present in $WALL_DIR ($(find "$WALL_DIR" -type f | wc -l) files), skipping download"
+    else
+        log "Fetching wallpaper collection (best effort)"
+        tmp="$(mktemp -d)"
+        if git clone --depth 1 https://github.com/rajan9884/wallpapers "$tmp/wallpapers" >/dev/null 2>&1; then
+            # Flatten: copy every image out of the nested repo layout,
+            # -n keeps any user-added file with the same name.
+            find "$tmp/wallpapers" -type f \( -iname "*.jpg" -o -iname "*.jpeg" \
+                -o -iname "*.png" -o -iname "*.webp" \) \
+                -exec cp -n {} "$WALL_DIR/" \;
+            log "  $(find "$WALL_DIR" -type f | wc -l) wallpapers in $WALL_DIR"
+        else
+            warn "wallpaper clone failed; copy images to $WALL_DIR manually"
+        fi
+        rm -rf "$tmp"
+    fi
+fi
+
 # ------------------------------------------------------------------- done ---
 log "Done."
 if [ ! -s "$HOME/.cache/current-wallpaper" ]; then
-    warn "No wallpaper selected yet: put images in ~/.local/share/wallpapers, then run"
-    warn "  ~/.config/sway/scripts/sway-wall.sh ~/path/to/wallpaper.jpg"
-    warn "to generate the matugen theme (waybar/rofi/foot/starship follow it)."
+    if pgrep -x sway >/dev/null 2>&1 && [ "$(find "$HOME/.local/share/wallpapers" -type f | head -1)" ]; then
+        log "Seeding theme from a random wallpaper"
+        "$HOME/.config/sway/scripts/random-wall.sh" >/dev/null 2>&1 \
+            || warn "theme seeding failed; run ~/.config/sway/scripts/sway-wall.sh <image> manually"
+    else
+        warn "No wallpaper selected yet: log into Sway, then run"
+        warn "  ~/.config/sway/scripts/sway-wall.sh ~/path/to/wallpaper.jpg"
+        warn "to generate the matugen theme (waybar/rofi/foot/starship follow it)."
+    fi
 fi
 cat <<'EOF'
 [install] Not covered by this script (see README.md):

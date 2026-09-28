@@ -216,9 +216,9 @@ bindsym $mod+t floating toggle
 # > Pop window out (float + pin)
 bindsym $mod+o exec $swayscripts/popout.sh
 # > Fullscreen
-bindsym $mod+f fullscreen
-# > Fullscreen (maximized equiv)
-bindsym $mod+Alt+f fullscreen
+bindsym $mod+f fullscreen toggle
+# > Maximized window (fills workspace, keeps bar/gaps — unlike fullscreen)
+bindsym $mod+Alt+f exec $swayscripts/maximize-toggle.sh
 # > Pseudo-tile equiv (flip split)
 bindsym $mod+p layout toggle split
 # > Toggle window split

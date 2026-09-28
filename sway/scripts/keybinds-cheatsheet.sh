@@ -178,7 +178,7 @@ prioritize_entries() {
         if (desc ~ /Close window/)             prio = 4
         if (desc ~ /^Lock screen$/)            prio = 5
         if (desc ~ /Power menu/)               prio = 5
-        if (desc ~ /Toggle fullscreen|Fullscreen/) prio = 6
+        if (desc ~ /Toggle fullscreen|Fullscreen|Maximized/) prio = 6
         if (desc ~ /Toggle.*floating/)         prio = 7
         if (desc ~ /Toggle window group/)      prio = 8
         if (desc ~ /Toggle.*split/)            prio = 9

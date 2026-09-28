@@ -69,7 +69,7 @@ exec blueman-applet
 exec autotiling
 exec sh -c "gsettings set org.gnome.desktop.interface color-scheme prefer-dark 2>/dev/null || true"
 exec sh -c "wl-paste --watch cliphist store"
-exec sh -c "sleep 3 && ~/.local/bin/power-profiles autodetect"
+exec ~/.local/bin/power-profiles watch
 # Login terminal: plain `foot` starts instantly (native C, no daemon).
 # It re-reads ~/.config/foot/colors.ini on every launch, so matugen
 # re-themes apply to new windows without restarting a server.

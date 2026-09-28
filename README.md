@@ -73,7 +73,6 @@ The script is idempotent; re-running it repairs anything missing.
 | Path | Deploys to | Purpose |
 | ---- | ---------- | ------- |
 | `sway/` | `~/.config/sway` | Compositor config, idle/lock, ~30 helper scripts |
-| `swaylock/` | `~/.config/swaylock` | Lock-screen config (matugen palette via `sway/swaylock-colors`) |
 | `btop/` | `~/.config/btop` | System monitor config (uses matugen theme) |
 | `mimeapps.list` | `~/.config/mimeapps.list` | Default apps (imv for images, GNOME Text Editor for text) |
 | `waybar/` | `~/.config/waybar` | Status bar config, themes, module scripts |

@@ -151,7 +151,7 @@ bindsym $mod+w kill
 # > Close window (graceful, sway native)
 bindsym $mod+q kill
 # > Lock screen
-bindsym $mod+Ctrl+l exec swaylock -f
+bindsym $mod+Ctrl+l exec $swayscripts/lock.sh
 # > Power menu
 bindsym $mod+Escape exec ~/.config/waybar/scripts/power-menu.sh
 # > Keybindings cheatsheet

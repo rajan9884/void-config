@@ -1,13 +1,14 @@
 # Matugen-generated palette outputs (regenerated on every wallpaper switch
 # via sway-wall.sh; templates live in matugen/templates/)
 sway/colors
-sway/swaylock-colors
+sway/swaylock-config
 mako/colors
 swaync/style.css
 swayosd/style.css
 rofi/colors.rasi
 foot/colors.ini
 waybar/colors.css
+btop/themes/
 gtk-3.0/gtk.css
 gtk-4.0/gtk.css
 gtk-4.0/gtk-dark.css

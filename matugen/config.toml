@@ -71,5 +71,5 @@ input_path = "~/.config/matugen/templates/sway-colors"
 output_path = "~/.config/sway/colors"
 
 [templates.swaylock]
-input_path = "~/.config/matugen/templates/swaylock-colors"
-output_path = "~/.config/sway/swaylock-colors"
+input_path = "~/.config/matugen/templates/swaylock-config"
+output_path = "~/.config/sway/swaylock-config"

@@ -58,20 +58,22 @@ if [ "$(id -u)" -eq 0 ]; then
     exit 1
 fi
 
-if command -v sudo >/dev/null 2>&1; then
-    PRIV="sudo"
-elif command -v doas >/dev/null 2>&1; then
-    PRIV="doas"
-else
-    echo "Neither sudo nor doas found; install opendoas or sudo first." >&2
-    exit 1
-fi
-log "Privilege escalation: $PRIV (credentials will be requested once)"
-if ! "$PRIV" -n true 2>/dev/null; then
-    if [ -n "${SUDO_ASKPASS:-}" ]; then
-        "$PRIV" -A -v
+if [ "$DO_PACKAGES" -eq 1 ]; then
+    if command -v sudo >/dev/null 2>&1; then
+        PRIV="sudo"
+    elif command -v doas >/dev/null 2>&1; then
+        PRIV="doas"
     else
-        "$PRIV" -v
+        echo "Neither sudo nor doas found; install opendoas or sudo first." >&2
+        exit 1
+    fi
+    log "Privilege escalation: $PRIV (credentials will be requested once)"
+    if ! "$PRIV" -n true 2>/dev/null; then
+        if [ -n "${SUDO_ASKPASS:-}" ]; then
+            "$PRIV" -A -v
+        else
+            "$PRIV" -v
+        fi
     fi
 fi
 

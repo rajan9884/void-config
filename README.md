@@ -1,3 +1,7 @@
+<img width="2880" height="1800" alt="preview" src="https://github.com/user-attachments/assets/d09df301-5323-4059-afcc-308dccf5675c" />
+
+---
+
 # void-config
 
 Sway-based Wayland desktop configuration for Void Linux (glibc, x86_64).
@@ -12,6 +16,7 @@ Void installation.
 - Git: `xbps-install -Sy git` (the installer covers everything else)
 
 ## Quick start
+
 
 ```sh
 git clone https://github.com/rajan9884/void-config.git ~/void-config
@@ -92,6 +97,8 @@ wallpaper pointer, etc.) are git-ignored; the templates under
 `matugen/templates/` are the versioned source they are rendered from.
 
 ## Theming pipeline
+
+<img width="2880" height="1800" alt="preview-02" src="https://github.com/user-attachments/assets/2b0cc688-9957-409b-9e19-3c93f1839297" />
 
 Wallpaper drives the theme. `sway/scripts/sway-wall.sh <image>` records
 the wallpaper, stages the lock-screen background, and runs matugen, which

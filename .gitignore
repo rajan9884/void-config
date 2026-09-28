@@ -17,3 +17,4 @@ nvim/lua/matugen-colors.lua
 starship.toml
 # Current wallpaper pointer, rewritten by sway-wall.sh on every switch
 sway/wallpaper
+nvim/starter/

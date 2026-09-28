@@ -26,7 +26,7 @@ evince
 eza
 fastfetch
 fd
-fetch
+fastfetch
 ffmpeg6
 flavours
 font-misc-misc

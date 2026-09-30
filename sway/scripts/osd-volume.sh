@@ -10,6 +10,19 @@ ACTION="$1"
 SINK="@DEFAULT_SINK@"
 MAX=150
 
+# Keybind-launched scripts may run without a session bus (tuigreet session
+# without dbus-run-session): recover it from the snapshot file.
+if [ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ]; then
+    for _busf in "${XDG_RUNTIME_DIR:-/run/user/1000}/session-bus.address" "$HOME/.cache/session-bus"; do
+        if [ -s "$_busf" ]; then
+            DBUS_SESSION_BUS_ADDRESS=$(cat "$_busf")
+            export DBUS_SESSION_BUS_ADDRESS
+            break
+        fi
+    done
+    unset _busf
+fi
+
 # 1. Server must be up or no OSD appears at all.
 if ! pgrep -x swayosd-server >/dev/null 2>&1; then
     swayosd-server >/dev/null 2>&1 &

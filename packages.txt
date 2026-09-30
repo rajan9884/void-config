@@ -89,6 +89,7 @@ rofimoji
 rtkit
 rust
 satty
+seatd
 setxkbmap
 slurp
 starship

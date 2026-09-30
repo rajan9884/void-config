@@ -91,8 +91,8 @@ if [ "$DO_PACKAGES" -eq 1 ]; then
     "$PRIV" xbps-install -Syu $(grep -v '^[[:space:]]*#' "$PACKAGES_FILE" | grep -v '^[[:space:]]*$' | tr '\n' ' ')
 
     log "Enabling services"
-    for svc in NetworkManager bluetoothd chronyd cronie dbus greetd polkitd \
-               power-profiles-daemon rtkit ufw; do
+    for svc in NetworkManager bluetoothd chronyd cronie dbus elogind greetd polkitd \
+               power-profiles-daemon rtkit seatd ufw; do
         if [ -d "/etc/sv/$svc" ] && [ ! -e "/var/service/$svc" ]; then
             "$PRIV" ln -s "/etc/sv/$svc" /var/service/
             log "  enabled $svc"
@@ -116,6 +116,30 @@ user = "_greeter"
 EOF
     else
         warn "tuigreet not installed; skipping /etc/greetd/config.toml"
+    fi
+    # Sway needs a session bus for waybar/swaync/portals, but greetd runs the
+    # session Exec= line verbatim (no shell, no bus). Wrap it so every login
+    # gets DBUS_SESSION_BUS_ADDRESS from the start (absolute paths: greetd's
+    # PATH may not include /usr/sbin).
+    if [ -f /usr/share/wayland-sessions/sway.desktop ]; then
+        "$PRIV" sed -i 's|^Exec=.*|Exec=/usr/sbin/dbus-run-session -- /usr/sbin/sway|' \
+            /usr/share/wayland-sessions/sway.desktop
+        log "  sway.desktop runs under dbus-run-session"
+    fi
+    # PipeWire session stack: sway launches bare `pipewire`, which spawns the
+    # session manager + PulseAudio bridge from these drop-ins (sway/config
+    # autostart note). Without them there is no sink and no audio.
+    if [ -x /usr/bin/wireplumber ] || [ -x /usr/sbin/wireplumber ]; then
+        "$PRIV" mkdir -p /etc/pipewire/pipewire.conf.d
+        printf '%s\n' '# void-config: spawn the session manager from bare `pipewire`.' \
+            'context.exec = [' \
+            '    { path = "/usr/sbin/wireplumber" args = "" }' \
+            ']' | "$PRIV" tee /etc/pipewire/pipewire.conf.d/10-wireplumber.conf >/dev/null
+        printf '%s\n' '# void-config: PulseAudio compatibility for pactl/pavucontrol/waybar.' \
+            'context.exec = [' \
+            '    { path = "/usr/sbin/pipewire-pulse" args = "" }' \
+            ']' | "$PRIV" tee /etc/pipewire/pipewire.conf.d/20-pipewire-pulse.conf >/dev/null
+        log "  pipewire autospawn drop-ins installed"
     fi
     if [ ! -f /etc/sudoers.d/wheel ]; then
         echo '%wheel ALL=(ALL:ALL) ALL' | "$PRIV" tee /etc/sudoers.d/wheel >/dev/null
@@ -237,6 +261,16 @@ if [ "$DO_WALLPAPERS" -eq 1 ]; then
             warn "wallpaper clone failed; copy images to $WALL_DIR manually"
         fi
         rm -rf "$tmp"
+    fi
+    # sway/config points at a static fallback background; guarantee it exists
+    # so a fresh clone without that exact filename never errors at startup.
+    if [ ! -f "$WALL_DIR/fallback-wallpaper.jpg" ]; then
+        _fb="$(find "$WALL_DIR" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' \
+            -o -iname '*.png' -o -iname '*.webp' \) 2>/dev/null | sort | head -n 1 || true)"
+        if [ -n "${_fb:-}" ]; then
+            cp -n "$_fb" "$WALL_DIR/fallback-wallpaper.jpg"
+            log "  seeded fallback wallpaper from $(basename "$_fb")"
+        fi
     fi
 fi
 

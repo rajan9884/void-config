@@ -10,6 +10,13 @@
 set -u
 
 RUNTIME="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+
+# Snapshot the session bus address so keybind-launched scripts (osd-*)
+# can recover it in sessions started without dbus-run-session.
+if [ -n "${DBUS_SESSION_BUS_ADDRESS:-}" ]; then
+    printf '%s\n' "$DBUS_SESSION_BUS_ADDRESS" > "$RUNTIME/session-bus.address" 2>/dev/null || true
+    chmod 600 "$RUNTIME/session-bus.address" 2>/dev/null || true
+fi
 for _ in $(seq 1 30); do
     [ -S "$RUNTIME/pipewire-0" ] && break
     sleep 0.5

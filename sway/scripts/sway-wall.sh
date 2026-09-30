@@ -5,6 +5,21 @@
 # ──────────────────────────────────────────────
 set -euo pipefail
 
+# Keybind-launched runs may have no session bus (tuigreet session without
+# dbus-run-session): recover it from the snapshot file so notify-send,
+# swaync-client and the swayosd restart below all reach the bus instead
+# of hanging/failing silently.
+if [ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ]; then
+    for _busf in "${XDG_RUNTIME_DIR:-/run/user/1000}/session-bus.address" "$HOME/.cache/session-bus"; do
+        if [ -s "$_busf" ]; then
+            DBUS_SESSION_BUS_ADDRESS=$(cat "$_busf")
+            export DBUS_SESSION_BUS_ADDRESS
+            break
+        fi
+    done
+    unset _busf
+fi
+
 WALLPAPER="${1:-}"
 [ -z "$WALLPAPER" ] && { echo "Usage: sway-wall.sh /path/to/wallpaper.jpg" >&2; exit 1; }
 [ -f "$WALLPAPER" ] || { echo "Not found: $WALLPAPER" >&2; exit 1; }
@@ -107,7 +122,7 @@ fi
 # ~/.config/foot/colors.ini automatically.
 
 # 5. Reload swaync with new colors (matugen writes ~/.config/swaync/style.css)
-swaync-client --reload-css -sw 2>/dev/null || { pkill -x swaync 2>/dev/null; setsid swaync >/dev/null 2>&1 < /dev/null & }
+timeout 5 swaync-client --reload-css -sw 2>/dev/null || { pkill -x swaync 2>/dev/null; setsid swaync >/dev/null 2>&1 < /dev/null & }
 
 # 6. GTK apps read css at launch — restart nautilus only if a window is open
 if swaymsg -t get_tree 2>/dev/null | grep -Fq '"app_id": "org.gnome.Nautilus"'; then
@@ -117,7 +132,7 @@ fi
 
 # 7. Nudges for apps that need a restart
 pgrep -x nvim >/dev/null 2>&1 && notify-send "Neovim Theme Updated" "Restart nvim to apply new colors" || true
-pywalfox update 2>/dev/null || true
+timeout 10 pywalfox update 2>/dev/null || true
 if pgrep -x chromium >/dev/null 2>&1 || pgrep -x brave >/dev/null 2>&1 || pgrep -x helium >/dev/null 2>&1; then
     notify-send "Browser Theme Updated" "Restart Chromium/Brave to apply new colors" -i "$WALLPAPER"
 fi

@@ -164,8 +164,8 @@ bindsym $mod+slash exec $swayscripts/keybinds-cheatsheet.sh
 bindsym $mod+r exec $swayscripts/random-wall.sh
 # > Wallpaper picker (rofi carousel)
 bindsym $mod+Ctrl+space exec ~/.local/bin/arch-wallpaper-picker
-# > Waybar style selector (15 styles)
-bindsym $mod+Alt+w exec ~/.local/bin/waybar-selector
+# > Toggle waybar theme (noro / floating-bar)
+bindsym $mod+Alt+w exec $swayscripts/waybar-theme-toggle.sh
 # > Install web app (paste link)
 bindsym $mod+Alt+Shift+w exec ~/.local/bin/webapp-install-prompt
 # > Remove web app

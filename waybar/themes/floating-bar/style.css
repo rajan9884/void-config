@@ -31,7 +31,7 @@ window#waybar {
     background: alpha(@primary_container, 0.6);
 }
 
-/* ── Workspaces (Pixel dot indicators) ── */
+/* ── Workspaces (numbers; ● = current) ── */
 #workspaces {
     margin: 4px 4px;
     padding: 0 4px;
@@ -40,22 +40,32 @@ window#waybar {
 }
 
 #workspaces button {
-    padding: 0 6px;
-    color: alpha(@on_surface_variant, 0.35);
-    font-size: 8px;
-    border-radius: 50%;
-    min-width: 20px;
+    padding: 2px 10px;
+    border-radius: 10px;
+    min-width: 22px;
     transition: all 200ms ease;
+    color: @primary;
+    font-size: 13px;
+    font-weight: 700;
+    background: transparent;
 }
 
 #workspaces button:hover {
     color: @primary;
-    background: alpha(@primary, 0.1);
+    background: alpha(@primary, 0.12);
 }
 
-#workspaces button.active {
+/* Current: solid dot, no background */
+#workspaces button.focused, #workspaces button.active {
+    background: transparent;
     color: @primary;
-    font-size: 10px;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+#workspaces button.urgent {
+    background: @error_container;
+    color: @on_error_container;
 }
 
 /* ── Clock (center, clean) ── */

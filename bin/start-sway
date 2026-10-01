@@ -38,6 +38,10 @@ export QT_STYLE_OVERRIDE=Rosepine-Dark
 export QT_AUTO_SCREEN_SCALE_FACTOR=1
 export QT_WAYLAND_DISABLE_WINDOWDECORATION=1
 
+# cursor (Bibata-Modern-Ice @ 24px — must be set before sway starts)
+export XCURSOR_THEME=Bibata-Modern-Ice
+export XCURSOR_SIZE=24
+
 # xdg base dirs
 export XDG_CACHE_HOME="$HOME/.cache"
 export XDG_CONFIG_HOME="$HOME/.config"

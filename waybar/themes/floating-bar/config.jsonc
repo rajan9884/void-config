@@ -12,18 +12,18 @@
     "margin-top": 6,
     "margin-left": 8,
     "margin-right": 8,
-    
+
     "modules-left": [
         "custom/launcher",
         "custom/record",
         "custom/voxtype",
         "sway/workspaces"
     ],
-    
+
     "modules-center": [
         "clock"
     ],
-    
+
     "modules-right": [
         "tray",
         "custom/separator",
@@ -34,7 +34,7 @@
     ],
 
     "custom/launcher": {
-        "format": "󰊠",
+        "format": "",
         "on-click": "rofi -show drun -theme ~/.config/rofi/active-launcher.rasi",
         "tooltip": false
     },
@@ -52,16 +52,45 @@
     "sway/workspaces": {
         "format": "{icon}",
         "format-icons": {
-            "1": "●",
-            "2": "●",
-            "3": "●",
-            "4": "●",
-            "5": "●",
-            "active": "◉",
-            "default": "○"
+            "1": "1",
+            "2": "2",
+            "3": "3",
+            "4": "4",
+            "5": "5",
+            "urgent": "",
+            "focused": "●"
         },
         "on-click": "activate",
         "all-outputs": true
+    },
+
+    "pulseaudio": {
+        "format": "{icon} {volume}%",
+        "format-muted": "󰖁 Muted",
+        "format-bluetooth": "{icon} {volume}%",
+        "format-bluetooth-muted": "󰖁 Muted",
+        "format-icons": {
+            "default": ["󰕿", "󰖀", "󰕾"]
+        },
+        "scroll-step": 5,
+        "on-click": "foot --app-id=pulsemixer -e pulsemixer",
+        "on-click-right": "pactl set-sink-mute @DEFAULT_SINK@ toggle"
+    },
+
+    "battery": {
+        "bat": "BAT1",
+        "adapter": "ADP0",
+        "interval": 30,
+        "states": {
+            "good": 80,
+            "warning": 30,
+            "critical": 15
+        },
+        "format": "{capacity}% {icon}",
+        "format-charging": "{capacity}% 󱐋",
+        "format-plugged": "{capacity}% 󱐋",
+        "format-icons": ["󰂎", "󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"],
+        "on-click": "~/.local/bin/power-profiles menu"
     },
 
     "clock": {

@@ -58,9 +58,9 @@ output_path = "~/.config/Code/User/matugen-colors.json"
 input_path = "~/.config/matugen/templates/btop.theme"
 output_path = "~/.config/btop/themes/matugen.theme"
 
-[templates.swaync]
-input_path = "~/.config/matugen/templates/swaync.css"
-output_path = "~/.config/swaync/style.css"
+[templates.mako]
+input_path = "~/.config/matugen/templates/mako-colors"
+output_path = "~/.config/mako/colors"
 
 [templates.starship]
 input_path = "~/.config/matugen/templates/starship.toml"

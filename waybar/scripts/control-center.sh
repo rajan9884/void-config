@@ -38,8 +38,7 @@ get_bright_bar() {
     echo "$bar $percent%"
 }
 
-DND_STATE="Off"
-if [ "$(swaync-client -D -sw 2>/dev/null)" = "true" ]; then DND_STATE="On"; fi
+DND_STATE="$("$HOME/.config/sway/scripts/mako-dnd.sh" state 2>/dev/null || echo Off)"
 
 # --- Prepare Menu Items ---
 WIFI_SSID=$(get_wifi)
@@ -71,7 +70,7 @@ case "$CHOICE" in
     *"Sound"*)
         foot --app-id=pulsemixer -e pulsemixer ;;
     *"Focus"*)
-        swaync-client -d -sw ;;
+        "$HOME/.config/sway/scripts/mako-dnd.sh" toggle ;;
     *"Power"*)
         ~/.config/waybar/scripts/power-menu.sh ;;
 esac

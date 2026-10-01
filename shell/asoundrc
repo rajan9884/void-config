@@ -1,0 +1,24 @@
+# ~/.asoundrc — route ALSA `default` through PipeWire.
+# Deployed by void-config/install.sh (shell/asoundrc -> ~/.asoundrc).
+#
+# Why this exists: Void's alsa-lib preloads /etc/alsa/conf.d but NOT
+# /usr/share/alsa/alsa.conf.d, so the shipped 50-pipewire.conf /
+# 99-pipewire-default.conf are never loaded and every ALSA client falls
+# through to raw hardware. cliamp (oto driver) then dies in
+# snd_pcm_hw_params_set_buffer_size_near because the hw device won't
+# accept its buffer size. This mirrors 99-pipewire-default.conf at user
+# level (no sudo needed). `type pipewire` resolves via
+# /usr/lib/alsa-lib/libasound_module_pcm_pipewire.so (alsa-pipewire pkg).
+pcm.!default {
+    type pipewire
+    playback_node "-1"
+    capture_node "-1"
+    hint {
+        show on
+        description "Default ALSA Output (currently PipeWire Media Server)"
+    }
+}
+
+ctl.!default {
+    type pipewire
+}

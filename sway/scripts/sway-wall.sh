@@ -7,7 +7,7 @@ set -euo pipefail
 
 # Keybind-launched runs may have no session bus (tuigreet session without
 # dbus-run-session): recover it from the snapshot file so notify-send,
-# swaync-client and the swayosd restart below all reach the bus instead
+# makoctl and the swayosd restart below all reach the bus instead
 # of hanging/failing silently.
 if [ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ]; then
     for _busf in "${XDG_RUNTIME_DIR:-/run/user/1000}/session-bus.address" "$HOME/.cache/session-bus"; do
@@ -63,7 +63,7 @@ fi
 printf '%s' "$WALLPAPER" > "$HOME/.cache/current-wallpaper"
 magick "$WALLPAPER" "$HOME/.cache/swaylock-bg.jpg" 2>/dev/null || cp -p "$WALLPAPER" "$HOME/.cache/swaylock-bg.jpg" 2>/dev/null || true
 
-# 2. Extract colors with matugen (updates waybar, rofi, foot, sway, swaync, …)
+# 2. Extract colors with matugen (updates waybar, rofi, foot, sway, mako, …)
 matugen image "$WALLPAPER" --type scheme-content -c ~/.config/matugen/config.toml --source-color-index 0
 
 # 2.1 Restart swayosd-server so it picks up the new style.css (reads CSS only at startup).
@@ -116,13 +116,14 @@ else
     ~/.config/sway/scripts/waybar-launch.sh >/dev/null 2>&1 < /dev/null &
 fi
 
-# 4. Terminals need no reload: foot has no live-reload (SIGUSR1/2 only
-# switch dark/light themes loaded at startup), so existing foot windows keep
-# the old colors until restarted while every NEW foot window reads the fresh
-# ~/.config/foot/colors.ini automatically.
+# 4. Live-recolor running terminals: foot has no config-reload signal
+# (SIGUSR1/2 only flip dark/light themes loaded at startup), so push the
+# fresh matugen palette to every open pty via OSC sequences. New foot
+# windows still read ~/.config/foot/colors.ini automatically.
+"$HOME/.config/sway/scripts/terminal-recolor.sh" >/dev/null 2>&1 || true
 
-# 5. Reload swaync with new colors (matugen writes ~/.config/swaync/style.css)
-timeout 5 swaync-client --reload-css -sw 2>/dev/null || { pkill -x swaync 2>/dev/null; setsid swaync >/dev/null 2>&1 < /dev/null & }
+# 5. Reload mako with new colors (matugen writes ~/.config/mako/colors)
+makoctl reload 2>/dev/null || { pkill -x mako 2>/dev/null; setsid mako >/dev/null 2>&1 < /dev/null & }
 
 # 6. GTK apps read css at launch — restart nautilus only if a window is open
 if swaymsg -t get_tree 2>/dev/null | grep -Fq '"app_id": "org.gnome.Nautilus"'; then

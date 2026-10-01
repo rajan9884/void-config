@@ -63,9 +63,9 @@ exec swayidle -w -C ~/.config/sway/swayidle.conf
 # serializes with sway-wall.sh's fallback so boot never stacks two bars.
 exec ~/.config/sway/scripts/waybar-launch.sh
 exec sh -c "pgrep -x swayosd-server >/dev/null || exec swayosd-server"
-exec swaync
-exec nm-applet
-exec blueman-applet
+exec mako
+# Removed: nm-applet / blueman-applet (floating-bar uses native
+# custom/wifi + bluetooth modules; the tray applets duplicated them)
 exec autotiling
 exec sh -c "gsettings set org.gnome.desktop.interface color-scheme prefer-dark 2>/dev/null || true"
 exec sh -c "wl-paste --watch cliphist store"
@@ -136,8 +136,6 @@ bindsym $mod+Shift+Alt+b exec $browser --incognito
 bindsym $mod+Shift+n exec $editor
 # > Open terminal with tmux
 bindsym $mod+Alt+Return exec $term -e tmux
-# > Tmux keybindings cheatsheet
-bindsym $mod+Alt+k exec ~/.local/bin/menu-tmux-keybindings
 # > Music player (cliamp)
 bindsym $mod+Shift+Alt+m exec cliamp
 # > Docker (lazydocker) — disabled: lazydocker not installed (xbps-install lazydocker to enable)
@@ -185,15 +183,13 @@ bindsym $mod+Ctrl+p exec ~/.config/waybar/scripts/power-menu.sh
 # > Bluetooth menu
 bindsym $mod+Ctrl+b exec ~/.config/waybar/scripts/bluetooth-menu.sh
 # > Control center
-bindsym $mod+Alt+c exec swaync-client -t -sw
+bindsym $mod+Alt+c exec ~/.config/waybar/scripts/control-center.sh
 # > Toggle night light (wlsunset)
 bindsym $mod+Ctrl+n exec $swayscripts/night-light.sh
 # > Toggle idle lock
 bindsym $mod+Ctrl+i exec $swayscripts/idle-toggle.sh
 # > Toggle blur/shadows on/off
 bindsym $mod+Shift+a exec $swayscripts/fx-toggle.sh
-# > Herdr keybindings
-bindsym $mod+Ctrl+k exec ~/.local/bin/menu-herdr-keybindings
 
 ### Windows & workspaces ###
 # > Focus left
@@ -473,17 +469,13 @@ bindsym $mod+x exec $swayscripts/universal-clipboard.sh cut
 # > Universal select all
 bindsym $mod+a exec $swayscripts/universal-clipboard.sh select-all
 
-### Notifications (swaync panel) ###
-# > Close last notification
-bindsym --locked $mod+comma exec swaync-client --close-latest -sw
-# > Close all notifications
-bindsym --locked $mod+Shift+comma exec swaync-client --close-all -sw
-# > Pause/resume notifications
-bindsym --locked $mod+Ctrl+comma exec swaync-client -d -sw
-# > Toggle notification panel
-bindsym --locked $mod+Alt+comma exec swaync-client -t -sw
-# > Open notification panel
-bindsym --locked $mod+Shift+Alt+comma exec swaync-client -op -sw
+### Notifications (mako) ###
+# > Dismiss latest notification
+bindsym --locked $mod+comma exec makoctl dismiss
+# > Dismiss all notifications
+bindsym --locked $mod+Shift+comma exec makoctl dismiss -a
+# > Silence / unsilence notifications
+bindsym --locked $mod+Ctrl+comma exec $swayscripts/mako-dnd.sh toggle
 
 ### Dictation (voxtype — binds run only if installed, else no-op) ###
 # > Toggle dictation

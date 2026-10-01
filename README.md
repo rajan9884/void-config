@@ -79,7 +79,7 @@ The script is idempotent; re-running it repairs anything missing.
 | `rofi/` | `~/.config/rofi` | Application launcher and menus |
 | `foot/` | `~/.config/foot` | Terminal configuration (matugen-themed) |
 | `nvim/` | `~/.config/nvim` | Neovim configuration |
-| `swaync/` | `~/.config/swaync` | Notification center |
+| `mako/` | `~/.config/mako` | Notification daemon |
 | `swayosd/` | `~/.config/swayosd` | On-screen display for volume/brightness |
 | `matugen/` | `~/.config/matugen` | Material-you color templates (source of truth) |
 | `xdg-desktop-portal/` | `~/.config/xdg-desktop-portal` | Portal backend preferences |
@@ -101,7 +101,7 @@ wallpaper pointer, etc.) are git-ignored; the templates under
 
 Wallpaper drives the theme. `sway/scripts/sway-wall.sh <image>` records
 the wallpaper, stages the lock-screen background, and runs matugen, which
-recolors Waybar, Rofi, Foot, Sway, SwayNC, SwayOSD, GTK, and Starship in
+recolors Waybar, Rofi, Foot, Sway, mako, SwayOSD, GTK, and Starship in
 one pass. Related helpers: `wall-selector`, `random-wall.sh`,
 `init-wallpaper.sh` (restores the last wallpaper at login).
 

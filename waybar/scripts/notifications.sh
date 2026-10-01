@@ -1,16 +1,15 @@
 #!/usr/bin/env bash
 # ──────────────────────────────────────────────
-#   Notification count for Waybar (swaync)
+#   mako status for Waybar (DND indicator — no panel)
+#   bell = notifications on · bell-off = silenced
 # ──────────────────────────────────────────────
 set -euo pipefail
-count="$(swaync-client -c -sw 2>/dev/null || echo 0)"
-count="${count//[^0-9]/}"
-[ -z "$count" ] && count=0
-dnd="$(swaync-client -D -sw 2>/dev/null || echo false)"
-if [ "$dnd" = "true" ]; then
-    jq -cn --argjson n "$count" '{text: ("󰂛 " + ($n | tostring)), tooltip: "Do Not Disturb on (middle-click to toggle)", class: "dnd"}'
-elif ((count > 0)); then
-    jq -cn --argjson n "$count" '{text: ("󰂚 " + ($n | tostring)), tooltip: "Notifications (click for panel, right-click clears all)", class: "has-notifications"}'
+if ! makoctl mode >/dev/null 2>&1; then
+    jq -cn '{text: "󰂚", tooltip: "mako not running", class: "no-notifications"}'
+    exit 0
+fi
+if makoctl mode 2>/dev/null | grep -qx 'do-not-disturb'; then
+    jq -cn '{text: "󰂛", tooltip: "Silenced (click to unsilence, right-click clears all)", class: "dnd"}'
 else
-    jq -cn '{text: "󰂚", tooltip: "No notifications (click for panel)", class: "no-notifications"}'
+    jq -cn '{text: "󰂚", tooltip: "Notifications on (click to silence, right-click clears all)", class: "no-notifications"}'
 fi

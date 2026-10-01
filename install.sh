@@ -91,7 +91,12 @@ if [ "$DO_PACKAGES" -eq 1 ]; then
     "$PRIV" xbps-install -Syu $(grep -v '^[[:space:]]*#' "$PACKAGES_FILE" | grep -v '^[[:space:]]*$' | tr '\n' ' ')
 
     log "Enabling services"
-    for svc in NetworkManager bluetoothd chronyd cronie dbus elogind greetd polkitd \
+    # NOTE: elogind is intentionally NOT supervised here. The elogind package
+    # ships dbus activation (org.freedesktop.login1.service, Exec with
+    # --daemon), which starts it on first login1 request; the daemon
+    # self-backgrounds, so a runit supervisor can never track it and just
+    # spins in a restart loop showing a permanent red X in vsv.
+    for svc in NetworkManager bluetoothd chronyd cronie dbus greetd polkitd \
                power-profiles-daemon rtkit seatd ufw; do
         if [ -d "/etc/sv/$svc" ] && [ ! -e "/var/service/$svc" ]; then
             "$PRIV" ln -s "/etc/sv/$svc" /var/service/
@@ -111,13 +116,13 @@ if [ "$DO_PACKAGES" -eq 1 ]; then
 [terminal]
 vt = 7
 [default_session]
-command = "tuigreet --time --remember --remember-user-session --sessions /usr/share/wayland-sessions --theme border=blue;text=white;prompt=green;time=gray;action=cyan;button=yellow;container=black;input=red"
+command = "tuigreet --time --asterisks --remember --remember-user-session --sessions /usr/share/wayland-sessions --theme border=blue;text=white;prompt=green;time=gray;action=cyan;button=yellow;container=black;input=red"
 user = "_greeter"
 EOF
     else
         warn "tuigreet not installed; skipping /etc/greetd/config.toml"
     fi
-    # Sway needs a session bus for waybar/swaync/portals, but greetd runs the
+    # Sway needs a session bus for waybar/mako/portals, but greetd runs the
     # session Exec= line verbatim (no shell, no bus). Wrap it so every login
     # gets DBUS_SESSION_BUS_ADDRESS from the start (absolute paths: greetd's
     # PATH may not include /usr/sbin).
@@ -186,7 +191,7 @@ link() { # link <source-in-repo> <destination>
 
 if [ "$DO_LINKS" -eq 1 ]; then
     log "Linking ~/.config directories (backups go to $BACKUP_DIR)"
-    for d in btop foot gtk-3.0 gtk-4.0 matugen nvim rofi sway swaync \
+    for d in btop foot gtk-3.0 gtk-4.0 mako matugen nvim rofi sway \
              swayosd waybar xdg-desktop-portal zsh; do
         [ -e "$REPO_DIR/$d" ] && link "$REPO_DIR/$d" "$HOME/.config/$d"
     done
@@ -198,6 +203,7 @@ if [ "$DO_LINKS" -eq 1 ]; then
     link "$REPO_DIR/shell/bashrc"       "$HOME/.bashrc"
     link "$REPO_DIR/shell/zprofile"     "$HOME/.zprofile"
     link "$REPO_DIR/shell/zshrc"        "$HOME/.zshrc"
+    link "$REPO_DIR/shell/asoundrc"     "$HOME/.asoundrc"
 
     log "Linking helper scripts into ~/.local/bin"
     mkdir -p "$HOME/.local/bin"

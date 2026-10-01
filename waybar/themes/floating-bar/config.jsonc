@@ -27,9 +27,18 @@
     "modules-right": [
         "tray",
         "custom/separator",
-        "pulseaudio",
-        "battery",
+        "custom/wifi",
         "custom/separator2",
+        "bluetooth",
+        "custom/separator3",
+        "backlight",
+        "custom/separator4",
+        "custom/notifications",
+        "custom/separator5",
+        "pulseaudio",
+        "custom/separator6",
+        "battery",
+        "custom/separator7",
         "custom/power"
     ],
 
@@ -45,6 +54,31 @@
     },
 
     "custom/separator2": {
+        "format": "│",
+        "tooltip": false
+    },
+
+    "custom/separator3": {
+        "format": "│",
+        "tooltip": false
+    },
+
+    "custom/separator4": {
+        "format": "│",
+        "tooltip": false
+    },
+
+    "custom/separator5": {
+        "format": "│",
+        "tooltip": false
+    },
+
+    "custom/separator6": {
+        "format": "│",
+        "tooltip": false
+    },
+
+    "custom/separator7": {
         "format": "│",
         "tooltip": false
     },
@@ -75,6 +109,46 @@
         "scroll-step": 5,
         "on-click": "foot --app-id=pulsemixer -e pulsemixer",
         "on-click-right": "pactl set-sink-mute @DEFAULT_SINK@ toggle"
+    },
+
+    "backlight": {
+        "device": "intel_backlight",
+        "format": "{icon} {percent}%",
+        "format-icons": ["󰃞", "󰃟", "󰃠"],
+        "on-scroll-up": "brightnessctl set 5%+ >/dev/null",
+        "on-scroll-down": "brightnessctl set 5%- >/dev/null",
+        "tooltip": false
+    },
+
+    "custom/wifi": {
+        "exec": "~/.config/waybar/scripts/wifi-status.sh",
+        "return-type": "json",
+        "interval": 5,
+        "on-click": "~/.config/waybar/scripts/wifi-menu.sh",
+        "signal": 14,
+        "tooltip": true
+    },
+
+    "bluetooth": {
+        "format": "󰂯",
+        "format-disabled": "󰂲",
+        "format-off": "󰂲",
+        "format-on": "󰂯",
+        "format-connected": "󰂱",
+        "on-click": "~/.config/waybar/scripts/bluetooth-menu.sh",
+        "on-click-right": "bluetoothctl power toggle",
+        "tooltip": true,
+        "tooltip-format": "{status}"
+    },
+
+    "custom/notifications": {
+        "exec": "~/.config/waybar/scripts/notifications.sh",
+        "return-type": "json",
+        "interval": 5,
+        "signal": 15,
+        "on-click": "~/.config/sway/scripts/mako-dnd.sh toggle",
+        "on-click-right": "makoctl dismiss -a",
+        "tooltip": true
     },
 
     "battery": {

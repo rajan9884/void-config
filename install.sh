@@ -213,6 +213,15 @@ if [ "$DO_LINKS" -eq 1 ]; then
         link "$script" "$HOME/.local/bin/$(basename "$script")"
     done
 
+    if [ -d "$REPO_DIR/applications" ]; then
+        log "Linking desktop overrides into ~/.local/share/applications"
+        mkdir -p "$HOME/.local/share/applications"
+        for desktop in "$REPO_DIR"/applications/*.desktop; do
+            [ -f "$desktop" ] || continue
+            link "$desktop" "$HOME/.local/share/applications/$(basename "$desktop")"
+        done
+    fi
+
     log "Creating data directories"
     mkdir -p "$HOME/.local/share/wallpapers" "$HOME/.cache"
 

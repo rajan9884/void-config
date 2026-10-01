@@ -114,6 +114,8 @@ for_window [app_id="^(code|Code|code-oss)$"] opacity 0.92
 for_window [app_id="org.gnome.TextEditor"] floating enable, resize set 900 650, move position center
 for_window [app_id="org.gnome.NautilusPreviewer"] floating enable, resize set 800 600, move position center
 for_window [app_id="^imv"] floating enable, move position center
+# Webapp installer/remover prompts (foot wrappers): small centered float
+for_window [app_id="^webapp-(install|remove)$"] floating enable, resize set 700 400, move position center
 # FileChooser portal (Chromium upload/open): otherwise tiles fullscreen
 for_window [app_id="xdg-desktop-portal-gtk"] floating enable, resize set 900 650, move position center
 

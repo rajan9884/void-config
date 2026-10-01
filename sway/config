@@ -110,9 +110,10 @@ workspace_layout default
 # VS Code: whisper of transparency (Arch parity: code-translucent 0.92/0.88;
 # sway takes a single value — active 0.92 wins, same as foot).
 for_window [app_id="^(code|Code|code-oss)$"] opacity 0.92
-# Floating popups: GNOME Text Editor + Nautilus preview (sushi)
+# Floating popups: GNOME Text Editor + Nautilus preview (sushi) + image viewer (imv)
 for_window [app_id="org.gnome.TextEditor"] floating enable, resize set 900 650, move position center
 for_window [app_id="org.gnome.NautilusPreviewer"] floating enable, resize set 800 600, move position center
+for_window [app_id="^imv"] floating enable, move position center
 # FileChooser portal (Chromium upload/open): otherwise tiles fullscreen
 for_window [app_id="xdg-desktop-portal-gtk"] floating enable, resize set 900 650, move position center
 

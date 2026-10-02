@@ -108,6 +108,17 @@ if [ "$DO_PACKAGES" -eq 1 ]; then
         "$PRIV" ln -s /etc/sv/warp-svc /var/service/
         log "  enabled warp-svc"
     fi
+    # snd-perms re-triggers sound-device udev events at boot so /dev/snd/*
+    # gets GROUP=audio + the elogind uaccess ACL. Boot coldplug otherwise
+    # leaves them root:root 0600 and PipeWire falls back to Dummy Output
+    # (see system/sv/snd-perms/run for the full explanation).
+    "$PRIV" mkdir -p /etc/sv/snd-perms
+    "$PRIV" cp "$REPO_DIR/system/sv/snd-perms/run" /etc/sv/snd-perms/run
+    "$PRIV" chmod +x /etc/sv/snd-perms/run
+    if [ ! -e /var/service/snd-perms ]; then
+        "$PRIV" ln -s /etc/sv/snd-perms /var/service/
+        log "  enabled snd-perms"
+    fi
 
     log "Configuring greetd + wheel sudo"
     if command -v tuigreet >/dev/null 2>&1; then

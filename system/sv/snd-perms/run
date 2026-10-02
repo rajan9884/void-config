@@ -1,0 +1,39 @@
+#!/bin/sh
+# snd-perms — re-apply udev permissions to sound device nodes at boot and
+# re-poke the sound subsystem once the user audio stack is up.
+#
+# Why this exists (two problems, both observed):
+#  1. Boot coldplug can leave /dev/snd/* as root:root 0600 (early-udev /
+#     stage-1 handoff races the SOF firmware probe, so the add events are
+#     processed before 50-udev-default.rules / 70-uaccess.rules are in
+#     effect). User-space PipeWire then sees no cards and falls back to
+#     Dummy Output. Re-triggering "add" once udevd is up re-applies
+#     GROUP=audio plus the elogind uaccess ACL.
+#  2. Even with correct permissions and a populated udev db, WirePlumber's
+#     initial ALSA scan at session start finds zero cards (verified via
+#     strace: the scan reads every /sys/class/sound entry and db file yet
+#     emits no objects), while runtime add/change events ARE picked up and
+#     the card appears immediately. So a second trigger is issued once a
+#     user wireplumber process exists; that is what actually restores audio
+#     after every reboot.
+# Suspend/resume does not recreate these nodes (suspend goes through
+# `loginctl suspend`, not zzz), so boot-time handling is sufficient.
+exec 2>&1
+i=0
+while [ ! -S /run/udev/control ] && [ "$i" -lt 30 ]; do
+    sleep 1
+    i=$((i + 1))
+done
+udevadm trigger --subsystem-match=sound --action=add
+udevadm settle --timeout=30 || true
+# Second pass: wait for the user session audio stack, then re-trigger so
+# the already-running WirePlumber picks the card up via monitor events.
+i=0
+while ! pgrep -x wireplumber >/dev/null 2>&1 && [ "$i" -lt 120 ]; do
+    sleep 1
+    i=$((i + 1))
+done
+sleep 5
+udevadm trigger --subsystem-match=sound --action=add
+udevadm settle --timeout=30 || true
+exec chpst -b snd-perms pause

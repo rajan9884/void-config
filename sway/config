@@ -48,6 +48,9 @@ exec dbus-update-activation-environment --all
 # Starting wireplumber manually as well creates a duplicate session
 # manager and wedges PipeWire (no audio, pactl/wpctl hang).
 exec sh -c "pkill -x pipewire-pulse; pkill -x wireplumber; pkill -x pipewire; sleep 1; exec pipewire"
+# Card re-probes can come up muted (see snd-perms boot re-trigger): unmute
+# the real default sink once it exists (volume itself is left untouched).
+exec sh -c 'for i in $(seq 1 60); do s=$(pactl get-default-sink 2>/dev/null) || s=""; case "$s" in ""|*auto_null*|*Dummy*) sleep 1;; *) wpctl set-mute "$s" 0 >/dev/null 2>&1; break;; esac; done'
 # Portal backends need PipeWire up (else the wlr backend exits at first
 # activation and screen sharing stays down until retried): wait for the
 # socket, then pre-start the wlr/gtk backends (see portal-warmup.sh).

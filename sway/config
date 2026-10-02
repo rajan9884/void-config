@@ -13,7 +13,7 @@ set $down j
 set $right l
 set $term foot
 set $menu rofi -show drun -theme ~/.config/rofi/active-launcher.rasi
-set $browser ~/.local/bin/chromium
+set $browser ~/.local/bin/helium-browser
 set $editor foot -e nvim
 set $file ~/.local/bin/nautilus-gnome
 set $swayscripts ~/.config/sway/scripts

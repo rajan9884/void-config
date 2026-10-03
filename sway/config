@@ -23,7 +23,11 @@ include ~/.config/sway/colors
 
 ### Outputs  (sway) ###
 output eDP-1 mode 2880x1800@90Hz position 0,0 scale 2
-output * bg ~/.local/share/wallpapers/fallback-wallpaper.jpg fill
+# No `output * bg <image>` here on purpose: awww-daemon is the sole
+# wallpaper painter. A sway image background spawns swaybg, which fights
+# awww over the background layer — after any reload/reconfigure swaybg is
+# recreated on top and hides awww, so Super+R recolors (matugen) while the
+# picture looks frozen. With no bg directive there is no swaybg at all.
 
 ### Input  (sway) ###
 input * {
@@ -115,6 +119,8 @@ workspace_layout default
 for_window [app_id="^(code|Code|code-oss)$"] opacity 0.92
 # Floating popups: GNOME Text Editor + Nautilus preview (sushi) + image viewer (imv)
 for_window [app_id="org.gnome.TextEditor"] floating enable, resize set 900 650, move position center
+for_window [app_id="org.gnome.Evince"] floating enable, resize set 1000 700, move position center
+for_window [app_id="org.gnome.Evince-previewer"] floating enable, resize set 1000 700, move position center
 for_window [app_id="org.gnome.NautilusPreviewer"] floating enable, resize set 800 600, move position center
 for_window [app_id="^imv"] floating enable, move position center
 # Webapp installer/remover prompts (foot wrappers): small centered float
@@ -497,7 +503,9 @@ bindsym --release F9 exec voxtype record stop
 # - Super+slash opens the cheatsheet (it shadowed monitor-scale in Hyprland too);
 #   monitor scaling lives on Super+Ctrl+Alt+Up/Down.
 
-# Current wallpaper as sway's own background (rewritten by sway-wall.sh on
-# every switch, AFTER the static fallback line above). This way a reload,
-# reboot, or awww hiccup shows the current image instead of the stale fallback.
-include ~/.config/sway/wallpaper
+# NOTE: no image `output * bg` / `include .../wallpaper` here (see Outputs
+# above — a swaybg image would cover awww after the next reload and freeze
+# the picture). The current image path is tracked in
+# ~/.cache/current-wallpaper and repainted at login by init-wallpaper.sh
+# through the full sway-wall.sh switch. If awww is ever down, sway-wall.sh
+# falls back to a one-shot `swaymsg output * bg` for that switch only.

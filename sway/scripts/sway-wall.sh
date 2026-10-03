@@ -87,13 +87,15 @@ if [ -f "$THEME_MANIFEST" ]; then
     rm -f "$HOME/.config/helium-theme/Cached Theme.pak"
 fi
 
-# 3. Persist wallpaper as sway's own background (so reboots/awww hiccups
-#    show the current image, not the stale fallback). Then apply the theme
-#    WITHOUT swaymsg reload / output-bg commands: both reconfigure outputs
-#    and flash the whole screen ~2s after the switch (the "awkward animation").
-#    Instead, resolve matugen's $vars and push client.* colors live, and
-#    reload waybar in place (SIGUSR2 = no bar blank).
-printf 'output * bg "%s" fill\n' "$WALLPAPER" > ~/.config/sway/wallpaper
+# 3. Apply the theme WITHOUT swaymsg reload / output-bg commands: both
+#    reconfigure outputs and flash the whole screen ~2s after the switch
+#    (the "awkward animation") — and any `output * bg <image>` spawns a
+#    swaybg that covers awww after the next reload (frozen-wallpaper bug:
+#    colors change, picture looks stuck). Instead, resolve matugen's $vars
+#    and push client.* colors live, and reload waybar in place (SIGUSR2 =
+#    no bar blank). Reboots re-apply the image from
+#    ~/.cache/current-wallpaper via init-wallpaper.sh at login.
+rm -f ~/.config/sway/wallpaper
 declare -A MC=()
 while read -r _ name value; do
     [ -n "${name:-}" ] && [ -n "${value:-}" ] && MC["$name"]="$value"
@@ -134,8 +136,8 @@ fi
 # 7. Nudges for apps that need a restart
 pgrep -x nvim >/dev/null 2>&1 && notify-send "Neovim Theme Updated" "Restart nvim to apply new colors" || true
 timeout 10 pywalfox update 2>/dev/null || true
-if pgrep -x chromium >/dev/null 2>&1 || pgrep -x brave >/dev/null 2>&1 || pgrep -x helium >/dev/null 2>&1; then
-    notify-send "Browser Theme Updated" "Restart Chromium/Brave to apply new colors" -i "$WALLPAPER"
+if pgrep -x chromium >/dev/null 2>&1 || pgrep -x brave >/dev/null 2>&1 || pgrep -x helium >/dev/null 2>&1 || pgrep -x helium-browser >/dev/null 2>&1; then
+    notify-send "Browser Theme Updated" "Fully quit Helium/Chromium (all windows) and reopen to apply new colors" -i "$WALLPAPER"
 fi
 
 # 8. Done (no "Theme Updated" popup: notifications stay silent on switch;

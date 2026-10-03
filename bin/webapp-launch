@@ -30,9 +30,21 @@ BROWSER="$(resolve_browser)" || {
   exit 1
 }
 
+# Chromium-family browsers only apply the matugen unpacked theme while it
+# is loaded, and --load-extension only takes effect on the initial launch
+# (a webapp can cold-start the whole browser singleton). Every candidate
+# below is Chromium-based, so inject the theme flag whenever the dir exists.
+THEME_ARGS=()
+case "$(basename "$BROWSER")" in
+  helium-browser|chromium|chromium-browser|google-chrome|google-chrome-stable|brave|brave-browser|vivaldi)
+    [ -f "$HOME/.config/helium-theme/manifest.json" ] && \
+      THEME_ARGS=("--load-extension=$HOME/.config/helium-theme")
+    ;;
+esac
+
 # Prefer uwsm-app when available (uwsm session handling), else plain setsid.
 if command -v uwsm-app &>/dev/null; then
-  exec setsid uwsm-app -- "$BROWSER" --app="$1" "${@:2}"
+  exec setsid uwsm-app -- "$BROWSER" "${THEME_ARGS[@]}" --app="$1" "${@:2}"
 else
-  exec setsid "$BROWSER" --app="$1" "${@:2}"
+  exec setsid "$BROWSER" "${THEME_ARGS[@]}" --app="$1" "${@:2}"
 fi

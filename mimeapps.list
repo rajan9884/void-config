@@ -13,6 +13,8 @@ x-scheme-handler/http=helium.desktop
 x-scheme-handler/https=helium.desktop
 x-scheme-handler/about=helium.desktop
 x-scheme-handler/unknown=helium.desktop
+application/pdf=org.gnome.Evince.desktop
 
 [Added Associations]
 text/plain=org.gnome.TextEditor.desktop;
+application/pdf=org.gnome.Evince.desktop;

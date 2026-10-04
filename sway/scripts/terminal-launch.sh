@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# Open a new foot terminal in the working directory of the currently
-# focused window (sway/Void port — uses swaymsg, not hyprctl).
+# Open a new terminal (alacritty primary, foot fallback) in the working
+# directory of the currently focused window (sway/Void port — uses swaymsg,
+# not hyprctl).
 # Fast path: one swaymsg + one jq + one ps snapshot, zero forks per process.
-# Foot starts instantly (native C), so no single-instance daemon is needed:
-# every launch is a cold `foot -D`.
+# Alacritty launches with --working-directory; no single-instance daemon is
+# needed: every launch is a cold start that re-reads the matugen colors.
 set -u
 dir="$HOME"
 pid="$(swaymsg -t get_tree 2>/dev/null | jq -r '.. | objects | select(.focused == true) | .pid // empty' 2>/dev/null | head -n 1 || true)"
@@ -40,11 +41,15 @@ if [[ -n "${pid:-}" ]] && [[ "$pid" =~ ^[0-9]+$ ]]; then
         [[ -n "$cwd" && -d "$cwd" ]] && dir="$cwd"
     fi
 fi
-# Prefer footclient when a `foot --server` is running (shares fonts/glyph
-# cache); fall back to a plain cold launch otherwise. The plain launch
-# re-reads ~/.config/foot/colors.ini, so matugen re-themes always apply to
-# new windows (server clients inherit the server's startup palette until it
-# restarts — plain foot is therefore the default path).
+# Alacritty first; foot stays as secondary fallback.
+if command -v alacritty >/dev/null 2>&1; then
+    exec alacritty --working-directory "$dir"
+fi
+# Foot fallback: prefer footclient when a `foot --server` is running (shares
+# fonts/glyph cache); fall back to a plain cold launch otherwise. The plain
+# launch re-reads ~/.config/foot/colors.ini, so matugen re-themes always
+# apply to new windows (server clients inherit the server's startup palette
+# until it restarts — plain foot is therefore the default foot path).
 FOOT_SOCK="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/foot-$WAYLAND_DISPLAY.sock"
 if [[ -S "$FOOT_SOCK" ]] && command -v footclient >/dev/null 2>&1 \
     && footclient -D "$dir" >/dev/null 2>&1; then

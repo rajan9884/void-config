@@ -2,6 +2,10 @@
  *   Waybar – Noro Theme (Dynamic Colors)
  * ────────────────────────────────────────────── */
 
+/* NOTE: resolved relative to ~/.config/waybar/style.css (a symlink to this
+ * file), so this picks up the matugen-generated ~/.config/waybar/colors.css.
+ * Always launch via the symlinked paths (see sway/scripts/waybar-launch.sh
+ * and waybar-theme-toggle.sh) — a direct -s <theme>/style.css breaks this. */
 @import "colors.css";
 @keyframes pulse {
     0% { opacity: 1; }
@@ -71,11 +75,14 @@ window#waybar {
 }
 /* --- Utility icons (backgroundless, float between the three capsules) --- */
 #custom-notifications, #custom-clipboard,
-#custom-power-profile {
+#custom-power-profile, #custom-idle {
     background: transparent;
     color: @on_surface;
     padding: 4px 8px;
     margin: 6px 0;
+}
+#custom-idle.inhibited {
+    color: @tertiary;
 }
 #custom-wifi {
     background: @primary; /* part of right pill */

@@ -39,6 +39,8 @@
         "custom/separator6",
         "battery",
         "custom/separator7",
+        "custom/idle",
+        "custom/separator8",
         "custom/power"
     ],
 
@@ -83,6 +85,11 @@
         "tooltip": false
     },
 
+    "custom/separator8": {
+        "format": "│",
+        "tooltip": false
+    },
+
     "sway/workspaces": {
         "format": "{icon}",
         "format-icons": {
@@ -107,7 +114,7 @@
             "default": ["󰕿", "󰖀", "󰕾"]
         },
         "scroll-step": 5,
-        "on-click": "foot --app-id=pulsemixer -e pulsemixer",
+        "on-click": "alacritty --class=pulsemixer -e pulsemixer",
         "on-click-right": "pactl set-sink-mute @DEFAULT_SINK@ toggle"
     },
 

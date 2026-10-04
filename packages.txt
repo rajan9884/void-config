@@ -49,6 +49,7 @@ ImageMagick
 intel-ucode
 intel-video-accel
 jq
+alacritty
 foot
 libllvm22
 libva-utils

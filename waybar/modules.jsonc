@@ -5,7 +5,7 @@
         "format-icons": {
             "default": ["󰕿", "󰖀", "󰕾"]
         },
-        "on-click": "foot --app-id=pulsemixer -e pulsemixer"
+        "on-click": "alacritty --class=pulsemixer -e pulsemixer"
     },
 
     "battery": {
@@ -79,6 +79,15 @@
         "signal": 15,
         "on-click": "~/.config/sway/scripts/mako-dnd.sh toggle",
         "on-click-right": "makoctl dismiss -a",
+        "tooltip": true
+    },
+
+    "custom/idle": {
+        "exec": "~/.config/waybar/scripts/idle-inhibit.sh",
+        "return-type": "json",
+        "interval": 5,
+        "signal": 13,
+        "on-click": "~/.config/sway/scripts/idle-toggle.sh",
         "tooltip": true
     },
 

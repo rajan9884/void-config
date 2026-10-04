@@ -6,6 +6,7 @@ mako/colors
 swayosd/style.css
 rofi/colors.rasi
 foot/colors.ini
+alacritty/colors.toml
 waybar/colors.css
 btop/themes/
 gtk-3.0/gtk.css

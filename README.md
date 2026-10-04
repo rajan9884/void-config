@@ -77,7 +77,8 @@ The script is idempotent; re-running it repairs anything missing.
 | `mimeapps.list` | `~/.config/mimeapps.list` | Default apps (imv for images, GNOME Text Editor for text) |
 | `waybar/` | `~/.config/waybar` | Status bar config, themes, module scripts |
 | `rofi/` | `~/.config/rofi` | Application launcher and menus |
-| `foot/` | `~/.config/foot` | Terminal configuration (matugen-themed) |
+| `alacritty/` | `~/.config/alacritty` | Primary terminal configuration (matugen-themed) |
+| `foot/` | `~/.config/foot` | Secondary terminal configuration (matugen-themed) |
 | `nvim/` | `~/.config/nvim` | Neovim configuration |
 | `mako/` | `~/.config/mako` | Notification daemon |
 | `swayosd/` | `~/.config/swayosd` | On-screen display for volume/brightness |

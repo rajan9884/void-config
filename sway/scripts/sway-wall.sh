@@ -63,7 +63,7 @@ fi
 printf '%s' "$WALLPAPER" > "$HOME/.cache/current-wallpaper"
 magick "$WALLPAPER" "$HOME/.cache/swaylock-bg.jpg" 2>/dev/null || cp -p "$WALLPAPER" "$HOME/.cache/swaylock-bg.jpg" 2>/dev/null || true
 
-# 2. Extract colors with matugen (updates waybar, rofi, foot, sway, mako, …)
+# 2. Extract colors with matugen (updates waybar, rofi, alacritty, foot, sway, mako, …)
 matugen image "$WALLPAPER" --type scheme-content -c ~/.config/matugen/config.toml --source-color-index 0
 
 # 2.1 Restart swayosd-server so it picks up the new style.css (reads CSS only at startup).
@@ -118,10 +118,10 @@ else
     ~/.config/sway/scripts/waybar-launch.sh >/dev/null 2>&1 < /dev/null &
 fi
 
-# 4. Live-recolor running terminals: foot has no config-reload signal
-# (SIGUSR1/2 only flip dark/light themes loaded at startup), so push the
-# fresh matugen palette to every open pty via OSC sequences. New foot
-# windows still read ~/.config/foot/colors.ini automatically.
+# 4. Live-recolor running terminals: neither alacritty nor foot picks up a
+# new palette in already-open windows, so push the fresh matugen palette
+# to every open pty via OSC sequences. New windows still read their
+# matugen colors file automatically (alacritty colors.toml / foot colors.ini).
 "$HOME/.config/sway/scripts/terminal-recolor.sh" >/dev/null 2>&1 || true
 
 # 5. Reload mako with new colors (matugen writes ~/.config/mako/colors)

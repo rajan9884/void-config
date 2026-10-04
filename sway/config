@@ -11,10 +11,10 @@ set $left h
 set $up k
 set $down j
 set $right l
-set $term foot
+set $term alacritty
 set $menu rofi -show drun -theme ~/.config/rofi/active-launcher.rasi
 set $browser ~/.local/bin/helium-browser
-set $editor foot -e nvim
+set $editor alacritty -e nvim
 set $file ~/.local/bin/nautilus-gnome
 set $swayscripts ~/.config/sway/scripts
 
@@ -77,10 +77,10 @@ exec autotiling
 exec sh -c "gsettings set org.gnome.desktop.interface color-scheme prefer-dark 2>/dev/null || true"
 exec sh -c "wl-paste --watch cliphist store"
 exec ~/.local/bin/power-profiles watch
-# Login terminal: plain `foot` starts instantly (native C, no daemon).
-# It re-reads ~/.config/foot/colors.ini on every launch, so matugen
-# re-themes apply to new windows without restarting a server.
-exec foot
+# Login terminal: alacritty is primary (foot kept as secondary fallback).
+# Alacritty re-reads ~/.config/alacritty/colors.toml on every launch, so
+# matugen re-themes apply to new windows without any daemon restart.
+exec alacritty
 
 ### Look & feel  (sway) ###
 font pango:JetBrainsMono Nerd Font 10
@@ -97,8 +97,8 @@ gaps outer 12
 # border on solo windows; `off` keeps the same 2px themed border as splits).
 smart_borders off
 smart_gaps off
-# Blur off systemwide — transparency comes from app opacity (e.g. foot
-# [colors-dark] alpha), not the blur pass. Tuning lines kept so blur can be
+# Blur off systemwide — transparency comes from app opacity (e.g. alacritty
+# window.opacity / foot [colors-dark] alpha), not the blur pass. Tuning lines kept so blur can be
 # re-enabled with one word if ever wanted.
 blur disable
 blur_xray enable
@@ -115,7 +115,7 @@ focus_follows_mouse yes
 workspace_layout default
 
 # VS Code: whisper of transparency (Arch parity: code-translucent 0.92/0.88;
-# sway takes a single value — active 0.92 wins, same as foot).
+# sway takes a single value — active 0.92 wins, same as alacritty).
 for_window [app_id="^(code|Code|code-oss)$"] opacity 0.92
 # Floating popups: GNOME Text Editor + Nautilus preview (sushi) + image viewer (imv)
 for_window [app_id="org.gnome.TextEditor"] floating enable, resize set 900 650, move position center
@@ -123,7 +123,7 @@ for_window [app_id="org.gnome.Evince"] floating enable, resize set 1000 700, mov
 for_window [app_id="org.gnome.Evince-previewer"] floating enable, resize set 1000 700, move position center
 for_window [app_id="org.gnome.NautilusPreviewer"] floating enable, resize set 800 600, move position center
 for_window [app_id="^imv"] floating enable, move position center
-# Webapp installer/remover prompts (foot wrappers): small centered float
+# Webapp installer/remover prompts (terminal wrappers): small centered float
 for_window [app_id="^webapp-(install|remove)$"] floating enable, resize set 700 400, move position center
 # FileChooser portal (Chromium upload/open): otherwise tiles fullscreen
 for_window [app_id="xdg-desktop-portal-gtk"] floating enable, resize set 900 650, move position center
@@ -144,7 +144,7 @@ bindsym $mod+Shift+Return exec $browser
 bindsym $mod+Shift+f exec $file
 # > Open private browser window
 bindsym $mod+Shift+Alt+b exec $browser --incognito
-# > Open editor (foot + nvim)
+# > Open editor (alacritty + nvim)
 bindsym $mod+Shift+n exec $editor
 # > Open terminal with tmux
 bindsym $mod+Alt+Return exec $term -e tmux

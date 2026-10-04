@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Share the active Wi-Fi network via QR code + password.
-# Renders with sixel/chafa image preview under foot, otherwise chafa fallback.
+# Renders with sixel/chafa image preview where supported (foot), otherwise chafa fallback.
 #
 # Usage: wifi-share [interface] [--password] [--copy]
 #   no flags  -> show QR + details, copy password to clipboard

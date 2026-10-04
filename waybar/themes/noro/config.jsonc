@@ -25,6 +25,7 @@
     "modules-right": [
         "tray",
         "custom/notifications",
+        "custom/idle",
         "custom/clipboard",
         "custom/power-profile",
         "battery",
@@ -112,7 +113,7 @@
             ]
         },
         "scroll-step": 5,
-        "on-click": "foot --app-id=pulsemixer -e pulsemixer",
+        "on-click": "alacritty --class=pulsemixer -e pulsemixer",
         "on-click-right": "pactl set-sink-mute @DEFAULT_SINK@ toggle",
         "tooltip": false
     },
@@ -181,6 +182,14 @@
         "signal": 15,
         "on-click": "~/.config/sway/scripts/mako-dnd.sh toggle",
         "on-click-right": "makoctl dismiss -a",
+        "tooltip": true
+    },
+    "custom/idle": {
+        "exec": "~/.config/waybar/scripts/idle-inhibit.sh",
+        "return-type": "json",
+        "interval": 5,
+        "signal": 13,
+        "on-click": "~/.config/sway/scripts/idle-toggle.sh",
         "tooltip": true
     },
     "custom/power": {

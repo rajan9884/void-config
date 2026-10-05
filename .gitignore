@@ -1,21 +1,29 @@
 # Matugen-generated palette outputs (regenerated on every wallpaper switch
-# via sway-wall.sh; templates live in matugen/.config/matugen/templates/)
-sway/.config/sway/colors
-sway/.config/sway/swaylock-config
-mako/.config/mako/colors
-swayosd/.config/swayosd/style.css
-rofi/.config/rofi/colors.rasi
-foot/.config/foot/colors.ini
-alacritty/.config/alacritty/colors.toml
-waybar/.config/waybar/colors.css
-btop/.config/btop/themes/
-gtk/.config/gtk-3.0/gtk.css
-gtk/.config/gtk-4.0/gtk.css
-gtk/.config/gtk-4.0/gtk-dark.css
-nvim/.config/nvim/lua/matugen-colors.lua
+# via sway-wall.sh; templates live in config/matugen/templates/)
+config/sway/colors
+config/sway/swaylock-config
+config/mako/colors
+config/rofi/colors.rasi
+config/foot/colors.ini
+config/alacritty/colors.toml
+config/waybar/colors.css
+config/btop/themes/
+config/gtk-3.0/gtk.css
+config/gtk-4.0/gtk.css
+config/gtk-4.0/gtk-dark.css
+config/nvim/lua/matugen-colors.lua
 # ~/.config/starship.toml is generated directly by matugen
-# (template matugen/.config/matugen/templates/starship.toml
-# is the versioned source of truth) — never tracked, never stowed.
+# (template config/matugen/templates/starship.toml
+# is the versioned source of truth) — never tracked.
+# ~/.config/swayosd/style.css likewise (template config/matugen/templates/swayosd.css).
 # Current wallpaper pointer, rewritten by sway-wall.sh on every switch
-sway/.config/sway/wallpaper
-nvim/.config/nvim/starter/
+config/sway/wallpaper
+# Waybar style symlinks (managed by waybar-theme-toggle.sh)
+config/waybar/config.jsonc
+config/waybar/style.css
+# Editor local state
+config/nvim/lazy-lock.json
+config/nvim/lazyvim.json
+# GTK runtime bookmarks
+config/gtk-3.0/bookmarks
+config/nvim/starter/

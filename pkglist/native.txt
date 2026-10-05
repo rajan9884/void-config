@@ -89,7 +89,6 @@ seatd
 setxkbmap
 slurp
 starship
-stow
 strace
 swaybg
 swayfx

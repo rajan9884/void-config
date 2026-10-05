@@ -8,8 +8,8 @@
 #   ./install.sh [options]
 #
 # Options:
-#   --packages-only   install XBPS packages and enable services, skip stow links
-#   --links-only      only (re)stow packages into $HOME (requires stow installed)
+#   --packages-only   install XBPS packages and enable services, skip dotfile links
+#   --links-only      only (re)create ~/.config ~/ ~/.local/bin symlinks
 #   --no-fonts        skip the Nerd Font download step
 #   --no-wallpapers   skip the wallpaper collection download step
 #   -h, --help        show this help and exit
@@ -21,7 +21,7 @@
 set -euo pipefail
 
 REPO_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-PACKAGES_FILE="$REPO_DIR/packages.txt"
+PACKAGES_FILE="$REPO_DIR/pkglist/native.txt"
 BACKUP_DIR="$HOME/.config-backup-void-$(date +%Y%m%d-%H%M%S)"
 
 DO_PACKAGES=1
@@ -113,7 +113,7 @@ if [ "$DO_PACKAGES" -eq 1 ]; then
     # leaves them root:root 0600 and PipeWire falls back to Dummy Output
     # (see system/sv/snd-perms/run for the full explanation).
     "$PRIV" mkdir -p /etc/sv/snd-perms
-    "$PRIV" cp "$REPO_DIR/system/sv/snd-perms/run" /etc/sv/snd-perms/run
+    "$PRIV" cp "$REPO_DIR/scripts/runit/snd-perms/run" /etc/sv/snd-perms/run
     "$PRIV" chmod +x /etc/sv/snd-perms/run
     if [ ! -e /var/service/snd-perms ]; then
         "$PRIV" ln -s /etc/sv/snd-perms /var/service/
@@ -174,56 +174,106 @@ EOF
 fi
 
 # ------------------------------------------------------------------ links ---
-# Stow layout: each top-level directory is a stow package mirroring $HOME,
-# e.g. alacritty/.config/alacritty/ -> ~/.config/alacritty,
-# shell/.zshrc -> ~/.zshrc, bin/.local/bin/* -> ~/.local/bin/*.
-# `system/` is NOT stowed (deployed to /etc/sv above).
-# ~/.config/starship.toml is NOT stowed: matugen generates it directly
-# from matugen/.config/matugen/templates/starship.toml on every wallpaper
+# Layout mirrors the Arch dotfiles repo: config/<app>/ -> ~/.config/<app>
+# (whole-directory symlinks), shell/<name> -> ~/.<name>,
+# bin/* -> ~/.local/bin/*, assets/applications/*.desktop ->
+# ~/.local/share/applications/*.desktop.
+# `scripts/` is NOT linked (snd-perms is deployed to /etc/sv above).
+# ~/.config/starship.toml is NOT linked: matugen generates it directly
+# from config/matugen/templates/starship.toml on every wallpaper
 # switch, so there is no tracked source file for it.
-STOW_PACKAGES="alacritty applications bin btop environment fastfetch foot gtk mako matugen mimeapps nvim rofi shell sway swayosd waybar xdg-desktop-portal zsh"
+# ~/.config/swayosd/ is NOT linked either: the repo ships no tracked files
+# there, matugen writes style.css into the real dir directly.
+link_config() { # link_config <app>
+    local name="$1"
+    local src="$REPO_DIR/config/$name"
+    local dst="$HOME/.config/$name"
+    [ -d "$src" ] || { warn "skip $name (not in repo)"; return; }
+    mkdir -p "$HOME/.config"
+    if [ -L "$dst" ]; then
+        rm "$dst" # refresh existing symlink
+    elif [ -e "$dst" ]; then
+        mkdir -p "$BACKUP_DIR"
+        mv "$dst" "$BACKUP_DIR/$name"
+        warn "backed up existing $name -> $BACKUP_DIR/$name"
+    fi
+    ln -s "$src" "$dst"
+    log "  linked $name"
+}
+
+link_home() { # link_home <name> — links shell/<name> to ~/.<name>
+    local name="$1"
+    local src="$REPO_DIR/shell/$name"
+    local dst="$HOME/.$name"
+    [ -f "$src" ] || { warn "skip $name (not in repo)"; return; }
+    if [ -L "$dst" ]; then
+        rm "$dst"
+    elif [ -e "$dst" ]; then
+        mkdir -p "$BACKUP_DIR"
+        mv "$dst" "$BACKUP_DIR/.$name"
+        warn "backed up existing .$name -> $BACKUP_DIR/.$name"
+    fi
+    ln -s "$src" "$dst"
+    log "  linked .$name"
+}
+
+link_config_file() { # link_config_file <repo-path> <config-relpath>
+    local src="$REPO_DIR/$1"
+    local dst="$HOME/.config/$2"
+    [ -f "$src" ] || { warn "skip $1 (not in repo)"; return; }
+    mkdir -p "$(dirname "$dst")"
+    if [ -L "$dst" ]; then
+        rm "$dst"
+    elif [ -e "$dst" ]; then
+        mkdir -p "$BACKUP_DIR"
+        mv "$dst" "$BACKUP_DIR/$(basename "$dst")"
+        warn "backed up existing $dst -> $BACKUP_DIR/"
+    fi
+    ln -s "$src" "$dst"
+    log "  linked $2"
+}
 
 if [ "$DO_LINKS" -eq 1 ]; then
-    if ! command -v stow >/dev/null 2>&1; then
-        echo "stow is required (packages.txt includes it). Run ./install.sh without --links-only first," >&2
-        echo "or 'xbps-install -Sy stow' manually." >&2
-        exit 1
-    fi
-    log "Removing legacy flat-layout symlinks (backups go to $BACKUP_DIR)"
-    # Pre-stow layout linked whole dirs (e.g. ~/.config/alacritty ->
-    # void-config/alacritty); those targets moved under .config/, so any
-    # symlink pointing into the repo is stale and must go before stowing.
-    while IFS= read -r -d '' l; do
-        target="$(readlink "$l")"
-        case "$target" in
-            "$REPO_DIR"/*)
-                mkdir -p "$BACKUP_DIR"
-                mv "$l" "$BACKUP_DIR/$(echo "$l" | tr '/' '_' | sed 's/^_//')"
-                log "  backed up stale link $l"
-                ;;
-        esac
-    done < <(find "$HOME" -maxdepth 1 -type l -print0 2>/dev/null; \
-        find "$HOME/.config" -maxdepth 1 -mindepth 1 -type l -print0 2>/dev/null; \
-        find "$HOME/.local/bin" "$HOME/.local/share/applications" \
-        -maxdepth 1 -mindepth 1 -type l -print0 2>/dev/null)
-    # Legacy ~/.config/fastfetch and ~/.config/environment.d were real dirs
-    # before being versioned; back them up so stow can take over cleanly.
-    # (Contents were imported into fastfetch/ and environment/ packages.)
-    # ~/.config/swayosd stays a real dir: the package ships no tracked files,
-    # matugen writes style.css there directly. ~/.config/starship.toml likewise
-    # stays a real generated file — never backed up, never stowed.
-    for realdir in "$HOME/.config/fastfetch" "$HOME/.config/environment.d"; do
-        if [ -e "$realdir" ] && [ ! -L "$realdir" ]; then
-            mkdir -p "$BACKUP_DIR"
-            mv "$realdir" "$BACKUP_DIR/$(echo "$realdir" | tr '/' '_' | sed 's/^_//')"
-            log "  backed up $realdir"
+    log "Linking ~/.config directories (backups go to $BACKUP_DIR)"
+    for app in sway waybar rofi foot alacritty btop matugen mako \
+               xdg-desktop-portal nvim gtk-3.0 gtk-4.0 fastfetch environment.d; do
+        link_config "$app"
+    done
+    # Single versioned file inside ~/.config (not a directory).
+    link_config_file config/mimeapps.list mimeapps.list
+    # Generated-only target dirs: matugen writes into these, nothing tracked.
+    mkdir -p "$HOME/.config/swayosd" "$HOME/.config/helium-theme"
+
+    log "Linking shell startup files"
+    for f in zshrc zprofile bashrc bash_profile asoundrc; do
+        link_home "$f"
+    done
+
+    log "Linking helper scripts into ~/.local/bin"
+    mkdir -p "$HOME/.local/bin"
+    for helper in "$REPO_DIR"/bin/*; do
+        [ -f "$helper" ] || continue
+        chmod +x "$helper"
+        ln -sf "$helper" "$HOME/.local/bin/$(basename "$helper")"
+        log "  helper: $(basename "$helper")"
+    done
+    # Drop helpers removed from the repo so old links dangle no more.
+    for stale in nautilus-cwd nautilus-gnome; do
+        if [ -L "$HOME/.local/bin/$stale" ] && [ ! -e "$HOME/.local/bin/$stale" ]; then
+            rm -f "$HOME/.local/bin/$stale"
+            log "  removed stale helper link: $stale"
         fi
     done
 
-    log "Stowing packages into \$HOME"
-    # shellcheck disable=SC2086
-    stow -R -t "$HOME" $STOW_PACKAGES
-    chmod +x "$REPO_DIR"/bin/.local/bin/* 2>/dev/null || true
+    if [ -d "$REPO_DIR/assets/applications" ]; then
+        log "Linking desktop overrides into ~/.local/share/applications"
+        mkdir -p "$HOME/.local/share/applications"
+        for desktop in "$REPO_DIR"/assets/applications/*.desktop; do
+            [ -f "$desktop" ] || continue
+            ln -sf "$desktop" "$HOME/.local/share/applications/$(basename "$desktop")"
+            log "  application: $(basename "$desktop")"
+        done
+    fi
 
     log "Creating data directories"
     mkdir -p "$HOME/.local/share/wallpapers" "$HOME/.cache"

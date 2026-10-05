@@ -4,7 +4,13 @@ image/png=imv.desktop
 image/gif=imv.desktop
 image/webp=imv.desktop
 image/bmp=imv.desktop
-text/plain=org.gnome.TextEditor.desktop
+image/x-ms-bmp=imv.desktop
+image/tiff=imv.desktop
+image/svg+xml=imv.desktop
+text/plain=nvim-foot.desktop
+text/markdown=nvim-foot.desktop
+application/json=nvim-foot.desktop
+text/x-tex=nvim-foot.desktop
 x-scheme-handler/claude-cli=claude-code-url-handler.desktop
 x-scheme-handler/claude=com.anthropic.Claude.desktop
 x-scheme-handler/codex=chatgpt.desktop
@@ -13,8 +19,8 @@ x-scheme-handler/http=helium.desktop
 x-scheme-handler/https=helium.desktop
 x-scheme-handler/about=helium.desktop
 x-scheme-handler/unknown=helium.desktop
-application/pdf=org.gnome.Evince.desktop
+application/pdf=org.pwmt.zathura.desktop
 
 [Added Associations]
-text/plain=org.gnome.TextEditor.desktop;
-application/pdf=org.gnome.Evince.desktop;
+text/plain=nvim-foot.desktop;
+application/pdf=org.pwmt.zathura.desktop;

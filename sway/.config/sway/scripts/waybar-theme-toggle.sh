@@ -2,7 +2,6 @@
 # Toggle waybar theme between noro and floating-bar.
 set -euo pipefail
 
-THEMES_DIR="$HOME/.config/waybar/themes"
 CONFIG_LINK="$HOME/.config/waybar/config.jsonc"
 STYLE_LINK="$HOME/.config/waybar/style.css"
 
@@ -25,9 +24,10 @@ done
 NEXT_INDEX=$(( (INDEX + 1) % ${#THEMES[@]} ))
 NEXT="${THEMES[NEXT_INDEX]}"
 
-# Update symlinks
-ln -sf "$THEMES_DIR/$NEXT/config.jsonc" "$CONFIG_LINK"
-ln -sf "$THEMES_DIR/$NEXT/style.css" "$STYLE_LINK"
+# Update symlinks (relative: resolved from the link's own directory,
+# so the repo stays portable across users/machines)
+ln -sf "themes/$NEXT/config.jsonc" "$CONFIG_LINK"
+ln -sf "themes/$NEXT/style.css" "$STYLE_LINK"
 
 # Restart waybar
 pkill -x waybar 2>/dev/null || true; pkill -x .waybar-wrapped 2>/dev/null || true

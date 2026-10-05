@@ -127,10 +127,19 @@ fi
 # 5. Reload mako with new colors (matugen writes ~/.config/mako/colors)
 makoctl reload 2>/dev/null || { pkill -x mako 2>/dev/null; setsid mako >/dev/null 2>&1 < /dev/null & }
 
-# 6. GTK apps read css at launch — restart nautilus only if a window is open
-if swaymsg -t get_tree 2>/dev/null | grep -Fq '"app_id": "org.gnome.Nautilus"'; then
-    pkill -x nautilus 2>/dev/null || true
-    (nautilus --new-window >/dev/null 2>&1 &) || true
+# 6. GTK apps read css at launch — Thunar windows are owned by the
+# `thunar --daemon` background process, so bounce the daemon on every
+# switch (even with no window open), otherwise the next window inherits
+# the previous wallpaper's theme.
+THUNAR_WAS_OPEN=false
+swaymsg -t get_tree 2>/dev/null | grep -Fq '"app_id": "thunar"' && THUNAR_WAS_OPEN=true
+pkill -x thunar 2>/dev/null || true
+pkill -x Thunar 2>/dev/null || true
+sleep 0.3
+setsid thunar --daemon >/dev/null 2>&1 < /dev/null &
+if [ "$THUNAR_WAS_OPEN" = true ]; then
+    sleep 0.5
+    setsid thunar >/dev/null 2>&1 < /dev/null &
 fi
 
 # 7. Nudges for apps that need a restart

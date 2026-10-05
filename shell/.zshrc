@@ -25,7 +25,7 @@ zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
 # (templates/starship.toml → truecolor hex palette), so the prompt follows
 # the desktop theme in every terminal — including Zed, whose Aura palette
 # no longer affects it (no ANSI magenta/cyan, no powerline caps).
-# bash inits starship too (see shell/bashrc).
+# bash inits starship too (see shell/.bashrc).
 if command -v starship >/dev/null 2>&1; then eval "$(starship init zsh)"; fi
 
 

@@ -8,8 +8,8 @@
 #   ./install.sh [options]
 #
 # Options:
-#   --packages-only   install XBPS packages and enable services, skip dotfile links
-#   --links-only      only (re)create ~/.config ~/ ~/.local/bin symlinks
+#   --packages-only   install XBPS packages and enable services, skip stow links
+#   --links-only      only (re)stow packages into $HOME (requires stow installed)
 #   --no-fonts        skip the Nerd Font download step
 #   --no-wallpapers   skip the wallpaper collection download step
 #   -h, --help        show this help and exit
@@ -174,73 +174,91 @@ EOF
 fi
 
 # ------------------------------------------------------------------ links ---
-link() { # link <source-in-repo> <destination>
-    local src="$1" dest="$2"
-    # Already pointing at the right source: nothing to do.
-    if [ -L "$dest" ] && [ "$(readlink "$dest")" = "$src" ]; then
-        return 0
-    fi
-    # Never write through a parent directory that itself links into the repo
-    # (e.g. ~/.config/zsh -> void-config/zsh): the file is already deployed
-    # via the directory link, and touching it would mutate the repo.
-    local parent_real
-    parent_real="$(realpath -m "$(dirname "$dest")")"
-    case "$parent_real/" in
-        "$REPO_DIR/"*)
-            log "  already covered by directory link, skipping: $dest"
-            return 0
-            ;;
-    esac
-    if [ -e "$dest" ] || [ -L "$dest" ]; then
-        mkdir -p "$BACKUP_DIR"
-        mv "$dest" "$BACKUP_DIR/$(echo "$dest" | tr '/' '_' | sed 's/^_//')"
-        log "  backed up $dest"
-    fi
-    mkdir -p "$(dirname "$dest")"
-    ln -sfn "$src" "$dest"
-}
+# Stow layout: each top-level directory is a stow package mirroring $HOME,
+# e.g. alacritty/.config/alacritty/ -> ~/.config/alacritty,
+# shell/.zshrc -> ~/.zshrc, bin/.local/bin/* -> ~/.local/bin/*.
+# `system/` is NOT stowed (deployed to /etc/sv above).
+# ~/.config/starship.toml is NOT stowed: matugen generates it directly
+# from matugen/.config/matugen/templates/starship.toml on every wallpaper
+# switch, so there is no tracked source file for it.
+STOW_PACKAGES="alacritty applications bin btop environment fastfetch foot gtk mako matugen mimeapps nvim rofi shell sway swayosd waybar xdg-desktop-portal zsh"
 
 if [ "$DO_LINKS" -eq 1 ]; then
-    log "Linking ~/.config directories (backups go to $BACKUP_DIR)"
-    for d in alacritty btop foot gtk-3.0 gtk-4.0 mako matugen nvim rofi sway \
-             swayosd waybar xdg-desktop-portal zsh; do
-        [ -e "$REPO_DIR/$d" ] && link "$REPO_DIR/$d" "$HOME/.config/$d"
-    done
-    [ -f "$REPO_DIR/starship.toml" ] && link "$REPO_DIR/starship.toml" "$HOME/.config/starship.toml"
-    [ -f "$REPO_DIR/mimeapps.list" ] && link "$REPO_DIR/mimeapps.list" "$HOME/.config/mimeapps.list"
-
-    log "Linking shell startup files"
-    link "$REPO_DIR/shell/bash_profile" "$HOME/.bash_profile"
-    link "$REPO_DIR/shell/bashrc"       "$HOME/.bashrc"
-    link "$REPO_DIR/shell/zprofile"     "$HOME/.zprofile"
-    link "$REPO_DIR/shell/zshrc"        "$HOME/.zshrc"
-    link "$REPO_DIR/shell/asoundrc"     "$HOME/.asoundrc"
-
-    log "Linking helper scripts into ~/.local/bin"
-    mkdir -p "$HOME/.local/bin"
-    for script in "$REPO_DIR"/bin/*; do
-        [ -f "$script" ] || continue
-        chmod +x "$script"
-        link "$script" "$HOME/.local/bin/$(basename "$script")"
-    done
-
-    if [ -d "$REPO_DIR/applications" ]; then
-        log "Linking desktop overrides into ~/.local/share/applications"
-        mkdir -p "$HOME/.local/share/applications"
-        for desktop in "$REPO_DIR"/applications/*.desktop; do
-            [ -f "$desktop" ] || continue
-            link "$desktop" "$HOME/.local/share/applications/$(basename "$desktop")"
-        done
+    if ! command -v stow >/dev/null 2>&1; then
+        echo "stow is required (packages.txt includes it). Run ./install.sh without --links-only first," >&2
+        echo "or 'xbps-install -Sy stow' manually." >&2
+        exit 1
     fi
+    log "Removing legacy flat-layout symlinks (backups go to $BACKUP_DIR)"
+    # Pre-stow layout linked whole dirs (e.g. ~/.config/alacritty ->
+    # void-config/alacritty); those targets moved under .config/, so any
+    # symlink pointing into the repo is stale and must go before stowing.
+    while IFS= read -r -d '' l; do
+        target="$(readlink "$l")"
+        case "$target" in
+            "$REPO_DIR"/*)
+                mkdir -p "$BACKUP_DIR"
+                mv "$l" "$BACKUP_DIR/$(echo "$l" | tr '/' '_' | sed 's/^_//')"
+                log "  backed up stale link $l"
+                ;;
+        esac
+    done < <(find "$HOME" -maxdepth 1 -type l -print0 2>/dev/null; \
+        find "$HOME/.config" -maxdepth 1 -mindepth 1 -type l -print0 2>/dev/null; \
+        find "$HOME/.local/bin" "$HOME/.local/share/applications" \
+        -maxdepth 1 -mindepth 1 -type l -print0 2>/dev/null)
+    # Legacy ~/.config/fastfetch and ~/.config/environment.d were real dirs
+    # before being versioned; back them up so stow can take over cleanly.
+    # (Contents were imported into fastfetch/ and environment/ packages.)
+    # ~/.config/swayosd stays a real dir: the package ships no tracked files,
+    # matugen writes style.css there directly. ~/.config/starship.toml likewise
+    # stays a real generated file — never backed up, never stowed.
+    for realdir in "$HOME/.config/fastfetch" "$HOME/.config/environment.d"; do
+        if [ -e "$realdir" ] && [ ! -L "$realdir" ]; then
+            mkdir -p "$BACKUP_DIR"
+            mv "$realdir" "$BACKUP_DIR/$(echo "$realdir" | tr '/' '_' | sed 's/^_//')"
+            log "  backed up $realdir"
+        fi
+    done
+
+    log "Stowing packages into \$HOME"
+    # shellcheck disable=SC2086
+    stow -R -t "$HOME" $STOW_PACKAGES
+    chmod +x "$REPO_DIR"/bin/.local/bin/* 2>/dev/null || true
 
     log "Creating data directories"
     mkdir -p "$HOME/.local/share/wallpapers" "$HOME/.cache"
 
     if ! command -v zsh >/dev/null 2>&1; then
         warn "zsh not installed; chsh skipped"
-    elif [ "$SHELL" != "$(command -v zsh)" ]; then
-        log "Setting zsh as login shell (password prompt expected)"
-        chsh -s "$(command -v zsh)" || warn "chsh failed; run 'chsh -s \$(which zsh)' manually"
+    else
+        # Compare canonical paths: /bin/zsh, /usr/bin/zsh and /usr/sbin/zsh
+        # are hardlinks to the same binary, but $SHELL may name a different
+        # one than `command -v` finds first in PATH. A string comparison
+        # would trigger a pointless (and failing) chsh in that case.
+        _zsh="$(command -v zsh)"
+        _shell_canon="$(readlink -f "$SHELL" 2>/dev/null || echo "$SHELL")"
+        _zsh_canon="$(readlink -f "$_zsh" 2>/dev/null || echo "$_zsh")"
+        if [ "$_shell_canon" = "$_zsh_canon" ]; then
+            : # already on zsh
+        else
+            # chsh only accepts paths listed in /etc/shells; prefer one
+            # that already is (e.g. /usr/bin/zsh over /usr/sbin/zsh).
+            _chsh_target=""
+            for _cand in "$_zsh" /usr/bin/zsh /bin/zsh; do
+                if [ -x "$_cand" ] && grep -Fxq "$_cand" /etc/shells 2>/dev/null; then
+                    _chsh_target="$_cand"
+                    break
+                fi
+            done
+            if [ -z "$_chsh_target" ]; then
+                warn "no zsh path is listed in /etc/shells; add one first:"
+                warn "  echo $_zsh | sudo tee -a /etc/shells && chsh -s $_zsh"
+            else
+                log "Setting zsh as login shell ($_chsh_target, password prompt expected)"
+                chsh -s "$_chsh_target" || warn "chsh failed; run 'chsh -s $_chsh_target' manually"
+            fi
+            unset _zsh _shell_canon _zsh_canon _chsh_target _cand
+        fi
     fi
 fi
 

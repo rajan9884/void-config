@@ -22,11 +22,9 @@ cronie
 curl
 dejavu-fonts-ttf
 elogind
-evince
 eza
 fastfetch
 fd
-fastfetch
 ffmpeg6
 flavours
 font-misc-misc
@@ -34,7 +32,6 @@ fzf
 git
 github-cli
 gnome-keyring
-gnome-text-editor
 gnome-themes-standard
 greetd
 grim
@@ -63,9 +60,7 @@ mesa-dri
 mesa-libgallium
 mesa-vaapi
 mesa-vulkan-intel
-nautilus
 neovim
-network-manager-applet
 nftables
 nodejs
 noto-fonts-emoji
@@ -94,8 +89,8 @@ seatd
 setxkbmap
 slurp
 starship
+stow
 strace
-sushi
 swaybg
 swayfx
 swayidle
@@ -103,8 +98,12 @@ swaylock
 terminus-font
 tesseract-ocr
 tesseract-ocr-eng
+Thunar
+thunar-archive-plugin
+thunar-volman
 tmux
 tree
+tumbler
 tuigreet
 udisks2
 ufw
@@ -119,6 +118,7 @@ wl-clipboard
 wlr-randr
 wlsunset
 wtype
+xarchiver
 xdg-desktop-portal
 xdg-desktop-portal-gnome
 xdg-desktop-portal-gtk
@@ -126,6 +126,8 @@ xdg-desktop-portal-wlr
 xdg-user-dirs
 yazi
 yt-dlp
+zathura
+zathura-pdf-mupdf
 zoxide
 zsh
 zsh-autosuggestions

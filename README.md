@@ -109,7 +109,7 @@ rendered from.
 Wallpaper drives the theme. `config/sway/scripts/sway-wall.sh <image>` records
 the wallpaper, stages the lock-screen background, and runs matugen, which
 recolors Waybar, Rofi, Foot, Sway, mako, SwayOSD, GTK, and Starship in
-one pass. Related helpers: `wall-selector`, `random-wall.sh`,
+one pass. Related helpers: `wall-selector.sh`, `random-wall.sh`,
 `init-wallpaper.sh` (restores the last wallpaper at login).
 
 ## Post-install steps (not scripted)

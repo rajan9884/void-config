@@ -180,8 +180,6 @@ bindsym $mod+Alt+w exec $swayscripts/waybar-theme-toggle.sh
 bindsym $mod+Alt+Shift+w exec ~/.local/bin/webapp-install-prompt
 # > Remove web app
 bindsym $mod+Alt+Shift+x exec ~/.local/bin/webapp-remove-prompt
-# > Share WiFi via QR
-bindsym $mod+Alt+q exec ~/.local/bin/wifi-share-prompt
 # > Emoji picker
 bindsym $mod+period exec ~/.local/bin/menu-emoji
 # > Emoji picker (alt)

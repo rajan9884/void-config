@@ -11,6 +11,8 @@ alias ff="fzf --preview 'bat --color=always {}'"
 alias ll='ls -lt'
 alias ..='cd ../'
 alias vsv='sudo vsv'
+alias vp-sync='XBPS_DISTDIR="$HOME/.local/share/pkg/void-packages" "$HOME/.local/share/pkg/void-packages/vp-sync"'
+export XBPS_DISTDIR="$HOME/.local/share/pkg/void-packages"
 # Dual-GitHub helpers: git-work / git-personal / git-whoami
 [ -f "$HOME/void-config/shell/git-accounts.sh" ] && source "$HOME/void-config/shell/git-accounts.sh"
 

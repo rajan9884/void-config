@@ -1,0 +1,24 @@
+" zathura - visible statusbar + sane scrolling
+" File: ~/.config/zathura/zathurarc (via void-config/config/zathura/)
+
+" --- statusbar / page numbers ---
+set guioptions "s"
+set font "JetBrainsMono Nerd Font 10"
+set statusbar-h-padding 10
+set statusbar-v-padding 10
+set statusbar-home-tilde true
+set statusbar-page-percent true
+set window-title-page true
+
+" --- scrolling / navigation ---
+set pages-per-row 1
+set scroll-step 100
+set scroll-full-overlap 0.02
+set scroll-wrap true
+set zoom-step 10
+set adjust-open best-fit
+set selection-clipboard clipboard
+
+" Half-page scroll (vim-style, no Ctrl needed clashing with sway)
+map d scroll half-down
+map u scroll half-up

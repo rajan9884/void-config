@@ -235,7 +235,7 @@ link_config_file() { # link_config_file <repo-path> <config-relpath>
 
 if [ "$DO_LINKS" -eq 1 ]; then
     log "Linking ~/.config directories (backups go to $BACKUP_DIR)"
-    for app in sway waybar rofi foot alacritty btop matugen mako \
+    for app in sway waybar rofi foot alacritty btop matugen mako zathura \
                xdg-desktop-portal nvim gtk-3.0 gtk-4.0 fastfetch environment.d; do
         link_config "$app"
     done

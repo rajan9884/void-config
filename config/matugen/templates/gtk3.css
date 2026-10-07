@@ -352,3 +352,26 @@ MousepadWindow statusbar {
     color: {{colors.on_surface_variant.default.hex}};
     border-top: 1px solid {{colors.outline_variant.default.hex}};
 }
+
+/* ── CSD window outline ──
+   Sway draws no border around client-decorated windows (border=csd),
+   so floating GTK dialogs (e.g. the xdg-desktop-portal-gtk file
+   chooser) melt into dark backgrounds — adw-gtk3's own decoration
+   shadow is dark-on-dark. A 1px outline in the palette outline slot
+   plus a soft drop shadow keeps them separated. Tiled / maximized /
+   fullscreen windows are excluded (no floating edge to outline). */
+decoration {
+    box-shadow: 0 0 0 1px {{colors.outline.default.hex}},
+                 0 12px 48px rgba(0, 0, 0, 0.45);
+}
+
+decoration:backdrop {
+    box-shadow: 0 0 0 1px alpha({{colors.outline.default.hex}}, 0.45),
+                 0 8px 32px rgba(0, 0, 0, 0.35);
+}
+
+.maximized decoration,
+.tiled decoration,
+.fullscreen decoration {
+    box-shadow: none;
+}

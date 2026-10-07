@@ -122,9 +122,6 @@ for_window [app_id="^(code|Code|code-oss)$"] opacity 0.92
 for_window [app_id="^org.pwmt.zathura$"] floating enable, resize set 1000 700, move position center
 for_window [app_id="^imv"] floating enable, move position center
 for_window [app_id="^xarchiver$"] floating enable, resize set 800 600, move position center
-# Mousepad: no Sway titlebar/buttons — filename stays visible in the
-# in-app tab bar (always-show-tabs) and in the window title for switchers.
-for_window [app_id="^org.xfce.mousepad$"] border none
 # Webapp installer/remover prompts (terminal wrappers): small centered float
 for_window [app_id="^webapp-(install|remove)$"] floating enable, resize set 700 400, move position center
 # FileChooser portal (Chromium upload/open): otherwise tiles fullscreen

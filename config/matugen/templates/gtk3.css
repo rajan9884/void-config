@@ -12,9 +12,33 @@
 @define-color theme_unfocused_bg_color {{colors.surface.default.hex}};
 @define-color theme_unfocused_fg_color {{colors.on_surface_variant.default.hex}};
 
-/* Sidebar */
+/* adw-gtk3 variable bridge — the theme paints window/headerbar/view/
+   sidebar/popover from its OWN @vars (ignoring theme_*), so remap them
+   to matugen slots. This kills the residual #222226/#2e2e32/#36363a
+   grays (and white text) in every GTK3 app, adaptively per wallpaper. */
+@define-color window_bg_color {{colors.surface.default.hex}};
+@define-color window_fg_color {{colors.on_surface.default.hex}};
+@define-color view_bg_color {{colors.surface.default.hex}};
+@define-color view_fg_color {{colors.on_surface.default.hex}};
+@define-color headerbar_bg_color {{colors.surface.default.hex}};
+@define-color headerbar_fg_color {{colors.on_surface.default.hex}};
+@define-color headerbar_border_color {{colors.outline_variant.default.hex}};
+@define-color headerbar_backdrop_color {{colors.surface.default.hex}};
+@define-color sidebar_bg_color {{colors.surface.default.hex}};
+@define-color sidebar_fg_color {{colors.on_surface.default.hex}};
+@define-color sidebar_backdrop_color {{colors.surface.default.hex}};
+@define-color sidebar_border_color {{colors.outline_variant.default.hex}};
+@define-color popover_bg_color {{colors.surface.default.hex}};
+@define-color popover_fg_color {{colors.on_surface.default.hex}};
+@define-color dialog_bg_color {{colors.surface.default.hex}};
+@define-color dialog_fg_color {{colors.on_surface.default.hex}};
+@define-color accent_bg_color {{colors.primary.default.hex}};
+@define-color accent_fg_color {{colors.on_primary.default.hex}};
+@define-color accent_color {{colors.primary.default.hex}};
+
+/* Sidebar — solid surface so it matches the main view (adaptive via matugen) */
 .sidebar, .sidebar .view, placessidebar, placessidebar .view {
-    background-color: {{colors.surface_container.default.hex}};
+    background-color: {{colors.surface.default.hex}};
     color: {{colors.on_surface.default.hex}};
 }
 
@@ -66,11 +90,11 @@ statusbar {
     color: {{colors.on_surface_variant.default.hex}};
 }
 
-/* Context Menu (nm-applet tray menu, popovers) */
+/* Context Menu (nm-applet tray menu, popovers) — solid surface (adaptive via matugen) */
 menu, popover, .popup {
-    background-color: {{colors.surface_container.default.hex}};
+    background-color: {{colors.surface.default.hex}};
     color: {{colors.on_surface.default.hex}};
-    border: 1px solid {{colors.outline_variant.default.hex}};
+    border: 1px solid {{colors.primary.default.hex}};
     border-radius: 12px;
     padding: 6px;
 }
@@ -112,6 +136,17 @@ button:hover {
 ThunarWindow toolbar, ThunarToolbar, .thunar toolbar {
     padding: 6px 8px;
     border-bottom: 1px solid {{colors.outline_variant.default.hex}};
+    background-color: {{colors.surface.default.hex}};
+    color: {{colors.on_surface.default.hex}};
+}
+
+/* Thunar titlebar + menubar: solid surface like the rest */
+ThunarWindow headerbar, ThunarWindow menubar,
+.thunar headerbar, .thunar menubar {
+    background-color: {{colors.surface.default.hex}};
+    color: {{colors.on_surface.default.hex}};
+    border: none;
+    box-shadow: none;
 }
 
 ThunarWindow toolbar button, ThunarToolbar button,
@@ -178,7 +213,7 @@ placessidebar row:selected {
     border-radius: 12px;
     padding: 6px 12px;
     border: 1px solid {{colors.outline_variant.default.hex}};
-    background-color: {{colors.surface_container.default.hex}};
+    background-color: {{colors.surface.default.hex}};
     color: {{colors.on_surface.default.hex}};
 }
 
@@ -193,8 +228,18 @@ placessidebar row:selected {
 
 .thunar .view:selected, ThunarStandardView .view:selected {
     border-radius: 8px;
-    background-color: alpha({{colors.primary.default.hex}}, 0.28);
-    color: {{colors.on_surface.default.hex}};
+    background-color: {{colors.primary.default.hex}};
+    color: {{colors.on_primary.default.hex}};
+}
+
+/* Filename labels inside selected cells must follow the selection
+   foreground explicitly — otherwise they keep the pale view text
+   color and wash out against the light selection background. */
+.thunar .view:selected label, ThunarStandardView .view:selected label,
+.thunar iconview:selected label, ThunarStandardView iconview:selected label,
+.thunar treeview:selected label, treeview row:selected label,
+.thunar .sidebar row:selected label, placessidebar row:selected label {
+    color: {{colors.on_primary.default.hex}};
 }
 
 .thunar .view:selected:focus, ThunarStandardView .view:selected:focus {
@@ -237,4 +282,73 @@ ThunarStatusbar, .thunar statusbar {
 .thunar scrollbar slider, ThunarWindow scrollbar slider {
     min-width: 8px;
     min-height: 8px;
+}
+
+/* ── Mousepad: GNOME Text Editor-like, full-bleed ──
+   Chrome in matugen surface (no gray), text area painted by the
+   Matugen gtksourceview-4 scheme. All variables, auto-recolors. */
+
+MousepadWindow, MousepadWindow .background {
+    background-color: {{colors.surface.default.hex}};
+    color: {{colors.on_surface.default.hex}};
+}
+
+MousepadWindow headerbar, MousepadWindow .titlebar,
+MousepadWindow toolbar, MousepadWindow menubar {
+    background-color: {{colors.surface.default.hex}};
+    color: {{colors.on_surface.default.hex}};
+    border: none;
+    box-shadow: none;
+}
+
+MousepadWindow toolbar {
+    border-bottom: 1px solid {{colors.outline_variant.default.hex}};
+}
+
+MousepadWindow headerbar button, MousepadWindow toolbar button {
+    border-radius: 10px;
+    border: none;
+    box-shadow: none;
+    color: {{colors.on_surface.default.hex}};
+}
+
+MousepadWindow headerbar button:hover, MousepadWindow toolbar button:hover {
+    background-color: alpha({{colors.primary.default.hex}}, 0.14);
+}
+
+/* Full-bleed text area (also covers any GTK3 editor if the
+   MousepadWindow selector ever misses after an update) */
+MousepadWindow textview, MousepadWindow textview.view, MousepadWindow textview text,
+textview, textview.view, textview text {
+    background-color: {{colors.surface.default.hex}};
+    color: {{colors.on_surface.default.hex}};
+}
+
+MousepadWindow textview selection, textview selection {
+    background-color: {{colors.primary.default.hex}};
+    color: {{colors.on_primary.default.hex}};
+}
+
+/* Tabs: quiet pill bar, active tab in primary */
+MousepadWindow notebook {
+    border: none;
+    background-color: {{colors.surface.default.hex}};
+}
+
+MousepadWindow notebook tab {
+    border-radius: 10px 10px 0 0;
+    background-color: transparent;
+    color: {{colors.on_surface_variant.default.hex}};
+}
+
+MousepadWindow notebook tab:checked {
+    background-color: {{colors.surface_container.default.hex}};
+    color: {{colors.on_surface.default.hex}};
+}
+
+/* Statusbar: quiet footer, no gray block */
+MousepadWindow statusbar {
+    background-color: {{colors.surface.default.hex}};
+    color: {{colors.on_surface_variant.default.hex}};
+    border-top: 1px solid {{colors.outline_variant.default.hex}};
 }

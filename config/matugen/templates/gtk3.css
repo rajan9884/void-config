@@ -375,3 +375,70 @@ decoration:backdrop {
 .fullscreen decoration {
     box-shadow: none;
 }
+
+/* ── Auth dialogs (polkit-gnome): palette colors, stock geometry ──
+   Only background/foreground/border colors — no padding, radius,
+   sizes or borders touched. Scoped to dialog action buttons + entry
+   so file-chooser content etc. keeps theme shapes.
+   NOTE: the agent loads gtk.css once at startup, so after a
+   wallpaper switch restart it (pkill + re-exec, see sway config)
+   before the new colors show in the next prompt. */
+dialog.background,
+messagedialog.background {
+    background-color: {{colors.surface.default.hex}};
+    color: {{colors.on_surface.default.hex}};
+}
+
+dialog entry,
+messagedialog entry {
+    background-color: {{colors.surface_container_high.default.hex}};
+    color: {{colors.on_surface.default.hex}};
+    border-color: {{colors.outline_variant.default.hex}};
+}
+
+dialog entry:focus,
+messagedialog entry:focus {
+    border-color: {{colors.primary.default.hex}};
+}
+
+dialog entry selection,
+messagedialog entry selection {
+    background-color: {{colors.primary.default.hex}};
+    color: {{colors.on_primary.default.hex}};
+}
+
+dialog .dialog-action-area button,
+dialog .dialog-action-box button,
+messagedialog .dialog-action-area button,
+messagedialog .dialog-action-box button {
+    background-color: {{colors.surface_container_high.default.hex}};
+    color: {{colors.on_surface.default.hex}};
+}
+
+dialog .dialog-action-area button:hover,
+dialog .dialog-action-box button:hover,
+messagedialog .dialog-action-area button:hover,
+messagedialog .dialog-action-box button:hover {
+    background-color: alpha({{colors.primary.default.hex}}, 0.16);
+}
+
+dialog button.suggested-action,
+messagedialog button.suggested-action {
+    background-color: {{colors.primary.default.hex}};
+    color: {{colors.on_primary.default.hex}};
+}
+
+/* polkit-gnome predates .suggested-action: its affirmative button is
+   just the dialog default (last in the action area), so paint it by
+   position + GTK default class. Still color-only. */
+dialog .dialog-action-area button.default,
+dialog .dialog-action-area button:last-child,
+dialog .dialog-action-box button.default,
+dialog .dialog-action-box button:last-child,
+messagedialog .dialog-action-area button.default,
+messagedialog .dialog-action-area button:last-child,
+messagedialog .dialog-action-box button.default,
+messagedialog .dialog-action-box button:last-child {
+    background-color: {{colors.primary.default.hex}};
+    color: {{colors.on_primary.default.hex}};
+}

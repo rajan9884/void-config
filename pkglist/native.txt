@@ -6,7 +6,6 @@ Waybar
 alsa-pipewire
 alsa-utils
 atuin
-autotiling
 awww
 base-devel
 base-system
@@ -40,7 +39,13 @@ gum
 gvfs-afc
 gvfs-mtp
 gvfs-smb
+hypridle
+hyprland
+hyprland-guiutils
+hyprlock
 hyprpicker
+hyprpolkitagent
+hyprsunset
 imv
 ImageMagick
 intel-ucode
@@ -90,10 +95,6 @@ setxkbmap
 slurp
 starship
 strace
-swaybg
-swayfx
-swayidle
-swaylock
 terminus-font
 tesseract-ocr
 tesseract-ocr-eng
@@ -115,13 +116,12 @@ wf-recorder
 wl-clip-persist
 wl-clipboard
 wlr-randr
-wlsunset
 wtype
 xarchiver
 xdg-desktop-portal
 xdg-desktop-portal-gnome
 xdg-desktop-portal-gtk
-xdg-desktop-portal-wlr
+xdg-desktop-portal-hyprland
 xdg-user-dirs
 yazi
 yt-dlp

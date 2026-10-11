@@ -77,7 +77,7 @@
         "return-type": "json",
         "interval": 5,
         "signal": 15,
-        "on-click": "~/.config/sway/scripts/mako-dnd.sh toggle",
+        "on-click": "~/.config/waybar/scripts/mako-dnd.sh toggle",
         "on-click-right": "makoctl dismiss -a",
         "tooltip": true
     },
@@ -87,7 +87,7 @@
         "return-type": "json",
         "interval": 5,
         "signal": 13,
-        "on-click": "~/.config/sway/scripts/idle-toggle.sh",
+        "on-click": "~/.config/waybar/scripts/idle-toggle-auto.sh",
         "tooltip": true
     },
 

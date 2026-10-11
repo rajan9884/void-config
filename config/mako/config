@@ -1,7 +1,7 @@
 # ── mako config (Void port) — colors come from matugen ──
 # ~/.config/mako/colors is generated from matugen/templates/mako-colors
 # on every wallpaper switch (matugen [templates.mako]); `makoctl reload`
-# re-reads it live (see sway-wall.sh step 5).
+# re-reads it live (see hypr-wall.sh step 5).
 include=~/.config/mako/colors
 
 font=JetBrainsMono Nerd Font 10

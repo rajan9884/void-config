@@ -1,6 +1,6 @@
 /* NOTE: resolved relative to ~/.config/waybar/style.css (a symlink to this
  * file), so this picks up the matugen-generated ~/.config/waybar/colors.css.
- * Always launch via the symlinked paths (see sway/scripts/waybar-launch.sh
+ * Always launch via the symlinked paths (see ~/.config/hypr/scripts/waybar-launch.sh
  * and waybar-theme-toggle.sh) — a direct -s <theme>/style.css breaks this. */
 @import "colors.css";
 

@@ -38,7 +38,7 @@ get_bright_bar() {
     echo "$bar $percent%"
 }
 
-DND_STATE="$("$HOME/.config/sway/scripts/mako-dnd.sh" state 2>/dev/null || echo Off)"
+DND_STATE="$("$HOME/.config/waybar/scripts/mako-dnd.sh" state 2>/dev/null || echo Off)"
 
 # --- Prepare Menu Items ---
 WIFI_SSID=$(get_wifi)
@@ -70,7 +70,7 @@ case "$CHOICE" in
     *"Sound"*)
         alacritty --class=pulsemixer -e pulsemixer ;;
     *"Focus"*)
-        "$HOME/.config/sway/scripts/mako-dnd.sh" toggle ;;
+        "$HOME/.config/waybar/scripts/mako-dnd.sh" toggle ;;
     *"Power"*)
         ~/.config/waybar/scripts/power-menu.sh ;;
 esac

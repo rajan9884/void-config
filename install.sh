@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# void-config installer — reproduce this Sway desktop on a fresh Void Linux.
+# void-config installer — reproduce this Hyprland desktop on a fresh Void Linux.
 #
 # Usage:
 #   git clone https://github.com/rajan9884/void-config.git ~/void-config
@@ -133,18 +133,15 @@ EOF
     else
         warn "tuigreet not installed; skipping /etc/greetd/config.toml"
     fi
-    # Sway needs a session bus for waybar/mako/portals, but greetd runs the
+    # Hyprland needs a session bus for waybar/mako/portals, but greetd runs the
     # session Exec= line verbatim (no shell, no bus). Wrap it so every login
-    # gets DBUS_SESSION_BUS_ADDRESS from the start (absolute paths: greetd's
-    # PATH may not include /usr/sbin).
-    if [ -f /usr/share/wayland-sessions/sway.desktop ]; then
-        "$PRIV" sed -i 's|^Exec=.*|Exec=/usr/sbin/dbus-run-session -- /usr/sbin/sway|' \
-            /usr/share/wayland-sessions/sway.desktop
-        log "  sway.desktop runs under dbus-run-session"
+    # gets DBUS_SESSION_BUS_ADDRESS from the start.
+    if [ -f /usr/share/wayland-sessions/hyprland.desktop ]; then
+        "$PRIV" sed -i 's|^Exec=.*|Exec=dbus-run-session -- /usr/bin/start-hyprland|' \
+            /usr/share/wayland-sessions/hyprland.desktop
+        log "  hyprland.desktop runs under dbus-run-session"
     fi
-    # PipeWire session stack: sway launches bare `pipewire`, which spawns the
-    # session manager + PulseAudio bridge from these drop-ins (sway/config
-    # autostart note). Without them there is no sink and no audio.
+    # PipeWire session stack: the compositor autostart launches bare `pipewire`,
     if [ -x /usr/bin/wireplumber ] || [ -x /usr/sbin/wireplumber ]; then
         "$PRIV" mkdir -p /etc/pipewire/pipewire.conf.d
         printf '%s\n' '# void-config: spawn the session manager from bare `pipewire`.' \
@@ -235,10 +232,21 @@ link_config_file() { # link_config_file <repo-path> <config-relpath>
 
 if [ "$DO_LINKS" -eq 1 ]; then
     log "Linking ~/.config directories (backups go to $BACKUP_DIR)"
-    for app in sway waybar rofi foot alacritty btop matugen mako zathura \
+    for app in hypr waybar rofi foot alacritty btop matugen mako zathura \
                xdg-desktop-portal nvim gtk-3.0 gtk-4.0 fastfetch environment.d; do
         link_config "$app"
     done
+    # NOTE: there is no config/hypr in this repo. The Hyprland config lives
+    # in its own repository (https://github.com/rajan9884/hypr) and is
+    # cloned straight into ~/.config/hypr below — kept separate because it
+    # was ported from the Arch setup and evolves on its own cadence.
+    if [ ! -e "$HOME/.config/hypr" ]; then
+        if git clone https://github.com/rajan9884/hypr "$HOME/.config/hypr" 2>/dev/null; then
+            log "  cloned hypr config"
+        else
+            warn "hypr config clone failed; clone https://github.com/rajan9884/hypr to ~/.config/hypr manually"
+        fi
+    fi
     # Single versioned file inside ~/.config (not a directory).
     link_config_file config/mimeapps.list mimeapps.list
     # Generated-only target dirs: matugen writes into these, nothing tracked.
@@ -258,7 +266,7 @@ if [ "$DO_LINKS" -eq 1 ]; then
         log "  helper: $(basename "$helper")"
     done
     # Drop helpers removed from the repo so old links dangle no more.
-    for stale in nautilus-cwd nautilus-gnome; do
+    for stale in nautilus-cwd nautilus-gnome start-sway; do
         if [ -L "$HOME/.local/bin/$stale" ] && [ ! -e "$HOME/.local/bin/$stale" ]; then
             rm -f "$HOME/.local/bin/$stale"
             log "  removed stale helper link: $stale"
@@ -356,8 +364,8 @@ if [ "$DO_WALLPAPERS" -eq 1 ]; then
         fi
         rm -rf "$tmp"
     fi
-    # sway/config points at a static fallback background; guarantee it exists
-    # so a fresh clone without that exact filename never errors at startup.
+    # hypr's init-wallpaper.sh restores the last wallpaper; guarantee at least
+    # one image exists so a fresh clone never errors at startup.
     if [ ! -f "$WALL_DIR/fallback-wallpaper.jpg" ]; then
         _fb="$(find "$WALL_DIR" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' \
             -o -iname '*.png' -o -iname '*.webp' \) 2>/dev/null | sort | head -n 1 || true)"
@@ -371,13 +379,13 @@ fi
 # ------------------------------------------------------------------- done ---
 log "Done."
 if [ ! -s "$HOME/.cache/current-wallpaper" ]; then
-    if pgrep -x sway >/dev/null 2>&1 && [ "$(find "$HOME/.local/share/wallpapers" -type f | head -1)" ]; then
+    if pgrep -x Hyprland >/dev/null 2>&1 && [ "$(find "$HOME/.local/share/wallpapers" -type f | head -1)" ]; then
         log "Seeding theme from a random wallpaper"
-        "$HOME/.config/sway/scripts/random-wall.sh" >/dev/null 2>&1 \
-            || warn "theme seeding failed; run ~/.config/sway/scripts/sway-wall.sh <image> manually"
+        "$HOME/.config/hypr/scripts/random-wall.sh" >/dev/null 2>&1 \
+            || warn "theme seeding failed; run ~/.config/hypr/scripts/hypr-wall.sh <image> manually"
     else
-        warn "No wallpaper selected yet: log into Sway, then run"
-        warn "  ~/.config/sway/scripts/sway-wall.sh ~/path/to/wallpaper.jpg"
+        warn "No wallpaper selected yet: log into Hyprland, then run"
+        warn "  ~/.config/hypr/scripts/hypr-wall.sh ~/path/to/wallpaper.jpg"
         warn "to generate the matugen theme (waybar/rofi/alacritty/starship follow it)."
     fi
 fi

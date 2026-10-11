@@ -67,11 +67,11 @@ handle_selection() {
 
     case "$choice" in
         "$I_LOCK  Lock")
-            swaylock & ;;
+            pidof hyprlock >/dev/null 2>&1 || hyprlock & ;;
 
         "$I_LOGOUT  Logout")
             if confirm_action "logout"; then
-                swaymsg exit
+                hyprctl dispatch "hl.dsp.exit()"
             fi ;;
 
         "$I_SLEEP  Sleep (suspend)")

@@ -3,14 +3,14 @@
 #   arch-wallpaper-picker — quattro-style wallpaper picker.
 #   Horizontal thumbnail carousel over the single flat collection in
 #   ~/.local/share/wallpapers/; the chosen image is applied
-#   through sway-wall.sh (set + matugen palette + reloads).
+#   through hypr-wall.sh (set + matugen palette + reloads).
 # ──────────────────────────────────────────────
 
 WALL_DIRS=()
 for _d in "$HOME/.local/share/wallpapers" "$HOME/Pictures/Wallpapers"; do
     [ -d "$_d" ] && WALL_DIRS+=("$_d")
 done
-SWWW_SCRIPT="$HOME/.config/sway/scripts/sway-wall.sh"
+WALL_SCRIPT="$HOME/.config/hypr/scripts/hypr-wall.sh"
 
 ((${#WALL_DIRS[@]})) || { echo "Wallpaper directory not found: $HOME/.local/share/wallpapers" >&2; exit 1; }
 
@@ -19,4 +19,4 @@ image=$("$HOME/.local/bin/arch-menu-images" \
 
 [[ -n $image ]] && [[ -f $image ]] || exit 0
 
-"$SWWW_SCRIPT" "$image"
+"$WALL_SCRIPT" "$image"

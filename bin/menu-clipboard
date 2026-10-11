@@ -31,8 +31,8 @@ case "$MODE" in
         echo -e "$OPTIONS" | rofi -dmenu -p "Power" -theme "$THEME" | {
             read -r choice
             case "$choice" in
-                Lock)     swaylock ;;
-                Logout)   swaymsg exit ;;
+                Lock)     pidof hyprlock >/dev/null 2>&1 || hyprlock ;;
+                Logout)   hyprctl dispatch "hl.dsp.exit()" ;;
                 Reboot)   loginctl reboot ;;
                 Shutdown) loginctl poweroff ;;
                 Suspend)  loginctl suspend ;;
@@ -73,7 +73,7 @@ case "$MODE" in
         ;;
     keybinds|keybinds_menu|menu-keybinds)
         # Live keybindings cheatsheet parsed from hyprland.lua
-        "$HOME/.config/sway/scripts/keybinds-cheatsheet.sh"
+        "$HOME/.config/hypr/scripts/keybinds-cheatsheet.sh"
         ;;
     *)
         echo "Unknown mode: $MODE" >&2

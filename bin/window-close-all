@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
-# Close all windows (sway).
-if [ -n "${SWAYSOCK:-}" ]; then
-  exec "$HOME/.config/sway/scripts/window-close-all.sh"
-fi
-swaymsg '[app_id=".*"] kill' 2>/dev/null || true
+# Close all windows (Hyprland Lua: `hyprctl dispatch` takes hl.dsp
+# expressions, so close the focused window repeatedly until none remain).
+for _ in $(seq 1 64); do
+    n=$(hyprctl clients -j 2>/dev/null | jq 'length')
+    [ "${n:-0}" -gt 0 ] || break
+    hyprctl dispatch "hl.dsp.window.close()" >/dev/null 2>&1 || break
+done
 notify-send "Windows" "All windows closed"

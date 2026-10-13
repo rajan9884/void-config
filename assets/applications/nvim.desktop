@@ -1,0 +1,14 @@
+[Desktop Entry]
+Name=Neovim
+GenericName=Text Editor
+Comment=Edit text files
+TryExec=nvim
+Exec=nvim %F
+Terminal=true
+Type=Application
+Icon=nvim
+Categories=Utility;TextEditor;Development;
+StartupNotify=false
+# Hidden: duplicate of "Neovim (foot)". The explicit foot wrapper
+# (nvim-foot.desktop) is the default for text files.
+NoDisplay=true

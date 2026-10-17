@@ -230,7 +230,7 @@ link_config_file() { # link_config_file <repo-path> <config-relpath>
 
 if [ "$DO_LINKS" -eq 1 ]; then
     log "Linking ~/.config directories (backups go to $BACKUP_DIR)"
-    for app in hypr quickshell foot alacritty btop cava Thunar matugen zathura \
+    for app in hypr quickshell theme foot alacritty btop cava Thunar matugen zathura \
                xdg-desktop-portal nvim gtk-3.0 gtk-4.0 fastfetch environment.d; do
         link_config "$app"
     done

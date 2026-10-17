@@ -30,7 +30,7 @@ error = "{{danger}}"
 disabled = false
 style = "bg:primary_container fg:on_primary_container bold"
 [os.symbols]
-Arch = " "
+Void = " "
 Linux = " "
 
 [username]

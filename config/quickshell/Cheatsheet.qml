@@ -17,8 +17,8 @@ Scope {
     property var binds: []
     property int selected: 0
 
-    // Preserve filter + selection across reopen (no jump-to-top).
-    onShowingChanged: { if (showing) { unmountTimer.stop(); mounted = true; pBinds.running = true } else unmountTimer.restart() }
+    // Fresh start on every open: query + selection reset, list back to top.
+    onShowingChanged: { if (showing) { unmountTimer.stop(); mounted = true; root.query = ""; root.selected = 0; pBinds.running = true } else unmountTimer.restart() }
     Timer { id: unmountTimer; interval: 200; onTriggered: root.mounted = false }
 
     function openMenu() {
@@ -92,7 +92,7 @@ Scope {
         if (root.query === "") return true
         var q = root.query.toLowerCase()
         return b.key.toLowerCase().indexOf(q) >= 0 || b.desc.toLowerCase().indexOf(q) >= 0
-    }).slice(0, 120)
+    }).slice(0, 240)
 
     LazyLoader {
         active: root.mounted
@@ -106,13 +106,13 @@ Scope {
             WlrLayershell.keyboardFocus: root.showing ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
             mask: Region { item: root.showing ? card : null }
             // Re-focus search on EVERY open (Component.onCompleted runs once only).
-            // Restore filter text (clearing it would reset query+selected
-            // to the top) and jump the list back to the saved selection.
+            // Field always starts empty — the list shows every current bind from
+            // top (fresh read of `hyprctl binds -j` on each open; nothing cached).
             Timer {
                 id: focusTimer
                 interval: 80
                 repeat: false
-                onTriggered: { searchField.text = root.query; searchField.forceActiveFocus(); bindList.positionViewAtIndex(root.selected, ListView.Visible) }
+                onTriggered: { searchField.text = ""; searchField.forceActiveFocus(); bindList.positionViewAtIndex(root.selected, ListView.Visible) }
             }
             // Binds reload async after open — re-anchor once they land.
             Timer {

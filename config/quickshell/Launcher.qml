@@ -82,7 +82,7 @@ Scope {
             if (s >= 0) scored.push({ app: apps[i], score: s })
         }
         scored.sort(function(a, b) { return b.score - a.score })
-        return scored.slice(0, 12).map(function(x) { return x.app })
+        return scored.slice(0, 30).map(function(x) { return x.app })
     }
 
     Process { id: calcProc }
@@ -159,6 +159,8 @@ Scope {
                             Keys.onPressed: function(event) {
                                 if (event.key === Qt.Key_Down) { if (root.filtered.length > 0) root.selected = (root.selected + 1) % root.filtered.length; event.accepted = true }
                                 else if (event.key === Qt.Key_Up) { if (root.filtered.length > 0) root.selected = (root.selected - 1 + root.filtered.length) % root.filtered.length; event.accepted = true }
+                                else if (event.key === Qt.Key_PageDown) { if (root.filtered.length > 0) root.selected = Math.min(root.selected + 5, root.filtered.length - 1); event.accepted = true }
+                                else if (event.key === Qt.Key_PageUp) { if (root.filtered.length > 0) root.selected = Math.max(root.selected - 5, 0); event.accepted = true }
                                 else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) { root.launchCurrent(); event.accepted = true }
                                 else if (event.key === Qt.Key_Escape) { root.closeMenu(); event.accepted = true }
                             }
@@ -166,7 +168,7 @@ Scope {
                         Text {
                             anchors.fill: parent
                             visible: searchField.text === ""
-                            text: "Type to search apps...  (=2+2 calc)"
+                            text: "Type to search apps..."
                             color: Theme.textFaint
                             font.family: Theme.fontFamily
                             font.pixelSize: 15
@@ -174,7 +176,7 @@ Scope {
                     }
                     Rectangle { width: parent.width; height: 1; color: Theme.border }
                     Text {
-                        visible: root.calcMode
+                        visible: root.calcMode || (root.query.length > 0 && root.query[0] === "=")
                         text: root.calcResult !== "" ? "= " + root.calcResult : "type expression, Enter copies"
                         color: Theme.accent
                         font.family: Theme.fontFamily
@@ -186,6 +188,11 @@ Scope {
                         clip: true
                         model: root.filtered
                         currentIndex: root.selected
+                        highlightFollowsCurrentItem: true
+                        // smooth the selection ride instead of snapping row-to-row
+                        highlightMoveDuration: 110
+                        // keep the selected row visible even when the model is re-filtered
+                        onCurrentIndexChanged: positionViewAtIndex(currentIndex, ListView.Contain)
                         delegate: Rectangle {
                             required property var modelData
                             required property int index
@@ -250,7 +257,7 @@ Scope {
                             MouseArea { anchors.fill: parent; onClicked: { root.selected = index; root.launchCurrent() } }
                         }
                     }
-                    Text { text: "fuzzy find · ↑↓ navigate · enter launch · =expr calc · esc close"; color: Theme.textFaint; font.family: Theme.fontFamily; font.pixelSize: 10 }
+                    Text { text: "fuzzy find · ↑↓ navigate · enter launch · esc close"; color: Theme.textFaint; font.family: Theme.fontFamily; font.pixelSize: 10 }
                 }
             }
         }

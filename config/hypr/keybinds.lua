@@ -71,7 +71,7 @@ hl.bind(mainMod .. " + N", hl.dsp.exec_cmd("qs ipc call notifications toggle"), 
 hl.bind("SUPER + comma", hl.dsp.exec_cmd("qs ipc call notifications dismiss"), { locked = true, description = "Dismiss notification" })
 hl.bind("SUPER + CTRL + comma", hl.dsp.exec_cmd("qs ipc call notifications dismissAll"), { locked = true, description = "Dismiss all notifications" })
 hl.bind("SUPER + SHIFT + comma", hl.dsp.exec_cmd("qs ipc call notifications dnd"), { locked = true, description = "Toggle notification silence" })
-hl.bind(mainMod .. " + ALT + T", hl.dsp.exec_cmd("qs ipc call todo toggle"), { description = "To-do list" })
+hl.bind(mainMod .. " + ALT + T", hl.dsp.exec_cmd("qs ipc call todo toggle"), { description = "Todo / notes panel (add, check off, clear done)" })
 hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd("qs ipc call bar toggle"), { description = "Toggle bar" })
 
 -- ── Float toggle (old-arch SUPER+T) ──

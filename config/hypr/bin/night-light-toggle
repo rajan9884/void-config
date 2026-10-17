@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
-# Night light toggle — hyprsunset on Hyprland, wlsunset on sway.
+# Night light toggle — hyprsunset (4000K on/off).
 set -euo pipefail
-if [ -n "${SWAYSOCK:-}" ] || ! command -v hyprsunset >/dev/null 2>&1; then
-  exec "$HOME/.config/sway/scripts/night-light.sh"
-fi
 if pgrep -x hyprsunset >/dev/null; then
   pkill -x hyprsunset
   notify-send "Night Light" "Disabled"

@@ -1,5 +1,5 @@
 #!/bin/sh
-# Hyprland env vars — Void port of start-sway (same machine, same themes).
+# Hyprland session env (palette parity with the ported shells).
 export LIBSEAT_BACKEND=seatd
 export CLUTTER_BACKEND=wayland
 export DESKTOP_SESSION=hyprland

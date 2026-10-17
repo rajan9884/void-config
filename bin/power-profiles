@@ -74,7 +74,7 @@ cmd_watch() {
     # Single instance: bail out quietly if another watcher holds the
     # lock. Probe first so the common duplicate case exits 0; the
     # exec'd flock below is still non-blocking (a lost race exits 1,
-    # which sway just logs on reload).
+    # which hyprland just logs on reload).
     flock -n "$lock" true 2>/dev/null || exit 0
     exec flock -n "$lock" env POWER_PROFILES_WATCH_LOCKED=1 "$0" watch
   fi

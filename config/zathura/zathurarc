@@ -19,6 +19,6 @@ set zoom-step 10
 set adjust-open best-fit
 set selection-clipboard clipboard
 
-" Half-page scroll (vim-style, no Ctrl needed clashing with sway)
+" Half-page scroll (vim-style, no Ctrl needed clashing with Hyprland)
 map d scroll half-down
 map u scroll half-up

@@ -4,9 +4,6 @@
 # Caffeine OFF = hypridle restarted.
 # Usage: idle-toggle.sh [toggle|on|off|status]
 set -euo pipefail
-refresh_bar() {
-    qs ipc call bar update 2>/dev/null || true
-}
 status() {
     if pgrep -x hypridle >/dev/null 2>&1; then
         jq -cn '{text:"󰶐", tooltip:"Idle lock on (click for caffeine, Super+Ctrl+i)", class:"idle-on"}'
@@ -14,10 +11,10 @@ status() {
         jq -cn '{text:"󰅶", tooltip:"Caffeine on — idle lock off (click to re-enable)", class:"inhibited"}'
     fi
 }
-caffeine_on() { pkill -x hypridle 2>/dev/null || true; notify-send "Idle" "Idle lock disabled"; refresh_bar; }
+caffeine_on() { pkill -x hypridle 2>/dev/null || true; notify-send "Idle" "Idle lock disabled"; }
 caffeine_off() {
     if ! pgrep -x hypridle >/dev/null; then setsid hypridle >/dev/null 2>&1 < /dev/null & disown; fi
-    notify-send "Idle" "Idle lock enabled"; refresh_bar
+    notify-send "Idle" "Idle lock enabled"
 }
 case "${1:-toggle}" in
     on|enable) caffeine_on ;;

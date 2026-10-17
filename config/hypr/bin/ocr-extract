@@ -8,7 +8,7 @@
 
 set -euo pipefail
 
-# Sway keybinds run with a minimal PATH (no ~/.local/bin): `tesseract` only
+# Hyprland keybinds run with a minimal PATH (no ~/.local/bin): `tesseract` only
 # exists as a ~/.local/bin shim (real binaries are named tesseract-ocr).
 export PATH="$HOME/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:$PATH"
 # Resolve the OCR binary once; fall back to the real name if the shim is gone.

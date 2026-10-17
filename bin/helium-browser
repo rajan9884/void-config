@@ -6,6 +6,6 @@
 # loaded, and --load-extension is ephemeral (dropped on relaunch), so we
 # inject it on every launch to keep the browser following the current palette.
 # --ozone-platform-hint=auto forces native Wayland (not Xwayland) so the
-# Wayland idle-inhibit protocol reaches sway/hyprland — otherwise fullscreen
+# Wayland idle-inhibit protocol reaches hyprland — otherwise fullscreen
 # YouTube never inhibits and hypridle lock mid-video.
 exec /usr/bin/helium-browser --ozone-platform-hint=auto --load-extension="$HOME/.config/helium-theme" "$@"

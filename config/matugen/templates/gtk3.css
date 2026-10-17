@@ -354,7 +354,7 @@ MousepadWindow statusbar {
 }
 
 /* ── CSD window outline ──
-   Sway draws no border around client-decorated windows (border=csd),
+   Hyprland draws no border around client-decorated windows (border=csd),
    so floating GTK dialogs (e.g. the xdg-desktop-portal-gtk file
    chooser) melt into dark backgrounds — adw-gtk3's own decoration
    shadow is dark-on-dark. A 1px outline in the palette outline slot
@@ -381,7 +381,7 @@ decoration:backdrop {
    sizes or borders touched. Scoped to dialog action buttons + entry
    so file-chooser content etc. keeps theme shapes.
    NOTE: the agent loads gtk.css once at startup, so after a
-   wallpaper switch restart it (pkill + re-exec, see sway config)
+   wallpaper switch restart it (pkill + re-exec, see hypr config)
    before the new colors show in the next prompt. */
 dialog.background,
 messagedialog.background {

@@ -1,5 +1,5 @@
 # ── matugen-generated alacritty colors — DO NOT EDIT ──
-# Generated from the active wallpaper on every switch (sway-wall.sh).
+# Generated from the active wallpaper on every switch (theme.py).
 # Mirrors matugen/templates/foot-colors.ini palette mapping.
 
 [colors.primary]

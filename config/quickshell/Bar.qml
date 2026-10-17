@@ -834,7 +834,7 @@ Scope {
         id: caffeineC
         Mod {
             glyphSize: root.sz.icon
-            glyph: root.idleOn ? "\uDB83\uDD90" : "\uef59"   // nf-fa-mug_hot (steaming mug)
+            glyph: "\uef59"   // nf-fa-mug_hot (steaming mug)
             active: !root.idleOn
             tip: root.idleOn ? "Idle lock on" : "Caffeine on — idle lock off"
             primaryHint: root.idleOn ? "Toggle idle lock (caffeine)" : "Re-enable idle lock"

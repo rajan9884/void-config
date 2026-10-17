@@ -668,7 +668,6 @@ Scope {
                                 visible: history.count > 0
                                 onClicked: root.clearHistory()
                             }
-                            IconBtn { ui: root.ui; icon: "󰅖"; tip: "Close"; onClicked: root.panelOpen = false }
                         }
                     }
 

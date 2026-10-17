@@ -144,9 +144,9 @@ Item {
                 }
 
                 Repeater {
-                    model: [{ id: "performance", icon: "\udb81\udcc5", label: "PERFORMANCE" },
-                            { id: "balanced",     icon: "\udb83\uDDF85", label: "BALANCED" },
-                            { id: "power-saver",  icon: "\udb83\uDDF86",       label: "POWER SAVER" }]
+                    model: [{ id: "performance", icon: "\uf0e7",  label: "PERFORMANCE" },
+                            { id: "balanced",     icon: "\u25D0", label: "BALANCED" },
+                            { id: "power-saver",  icon: "\u25D4", label: "POWER SAVER" }]
 
                     delegate: Rectangle {
                         id: card

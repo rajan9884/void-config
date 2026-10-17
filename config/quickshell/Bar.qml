@@ -19,13 +19,24 @@ Scope {
         hidden: "stats,wall",
         startMods: "stats,ws",
         centerMods: "clock",
-        endMods: "media,volume,battery,net,notif,wall,power"
+        endMods: "caffeine,media,volume,battery,net,notif,wall,power"
     })
     readonly property var positions: ["top", "right", "bottom", "left"]
     readonly property var styles: ["floating", "joined", "strip"]
     readonly property var statsModes: ["default", "compact"]
 
-    Component.onCompleted: BluetoothState.init()
+    // Idle-lock (hypridle) state for the caffeine module; polled so the
+    // icon tracks toggles from any source (bar click, SUPER+CTRL+I, CLI).
+    property bool idleOn: true
+    Process {
+        id: idleCheck
+        command: ["sh", "-c", "pgrep -x hypridle >/dev/null && echo 1 || echo 0"]
+        stdout: StdioCollector { onStreamFinished: root.idleOn = text.trim() === "1" }
+    }
+    Timer {
+        interval: 2000; running: true; repeat: true; triggeredOnStart: true
+        onTriggered: if (!idleCheck.running) idleCheck.running = true
+    }
     
     FileView {
         id: cfgFile
@@ -122,11 +133,13 @@ Scope {
     //   g = glyph, tip = tooltip title, hint = left-click description.
     // Modules without it have a dedicated Component below (see `comps`).
     readonly property var moduleDefs: [
+        { id: "logo",     l: "Void logo" },
         { id: "stats",    l: "CPU / RAM" },
         { id: "ws",       l: "Workspaces" },
         { id: "media",    l: "Media" },
         { id: "volume",   l: "Volume" },
         { id: "battery",  l: "Battery" },
+        { id: "caffeine", l: "Idle / caffeine" },
         { id: "net",      l: "Network",       cmd: "qs ipc call network toggle",
                                               hint: "Open network panel" },
         { id: "notif",    l: "Notifications", cmd: "qs ipc call notifications toggle", g: "\uDB80\uDC9C",
@@ -139,7 +152,8 @@ Scope {
     readonly property var moduleIds: moduleDefs.map(d => d.id)
     readonly property var defMap: moduleDefs.reduce((m, d) => { m[d.id] = d; return m; }, {})
     readonly property var comps: ({
-        stats: statsC, ws: wsC, media: mediaC, volume: volumeC, battery: batteryC, icon: iconC
+        stats: statsC, ws: wsC, media: mediaC, volume: volumeC, battery: batteryC,
+        logo: logoC, caffeine: caffeineC, icon: iconC
     })
 
     function csv(str) { return str === "" ? [] : str.split(","); }
@@ -160,15 +174,20 @@ Scope {
     }
 
     // sections
-    readonly property var startList: csv(cfg.startMods).filter(valid)
+    // `logo` is always the first module; drop a stale "logo" entry in
+    // saved config so it can't render twice.
+    readonly property var startList: ["logo"].concat(csv(cfg.startMods).filter(x => x !== "logo" && valid(x)))
     readonly property var centerList: {
         const a = csv(cfg.centerMods).filter(x => x === "clock" || valid(x));
         return a.indexOf("clock") >= 0 ? a : ["clock"].concat(a);
     }
     readonly property var endList: {
         const a = csv(cfg.endMods).filter(valid);
-        return a.concat(moduleIds.filter(x =>
-            startList.indexOf(x) < 0 && centerList.indexOf(x) < 0 && a.indexOf(x) < 0));
+        // caffeine always leads the right side (before the audio modules);
+        // drop a stale "caffeine" entry in saved config so it can't render twice.
+        const out = ["caffeine"].concat(a.filter(x => x !== "caffeine" && x !== "logo"));
+        return out.concat(moduleIds.filter(x =>
+            startList.indexOf(x) < 0 && centerList.indexOf(x) < 0 && out.indexOf(x) < 0));
     }
 
     // ───────────────────────── State / IPC ─────────────────────────
@@ -789,11 +808,47 @@ Scope {
             vglyph: root.batIcon
             text: root.batPct + "%"
             vtext: root.batPct + ""
-            interactive: false
             warning: root.batLow
             active: root.vertical && root.batCharging
             tip: root.batTip
+            primaryHint: "Power profiles (performance / balanced / saver)"
+            onPrimary: root.run("qs ipc call settings page power")
         }
+    }
+
+    // Void Linux mark — leftmost module, decorative
+    Component {
+        id: logoC
+        Mod {
+            glyph: "\uf32e"   // nf-linux-void
+            glyphSize: root.s(15)
+            padX: 12
+            interactive: false
+            tip: "Void Linux"
+        }
+    }
+
+    // Caffeine — click toggles idle lock (hypridle) via idle-toggle.sh,
+    // the same mechanism as SUPER+CTRL+I.
+    Component {
+        id: caffeineC
+        Mod {
+            glyphSize: root.sz.icon
+            glyph: root.idleOn ? "\uDB83\uDD90" : "\uef59"   // nf-fa-mug_hot (steaming mug)
+            active: !root.idleOn
+            tip: root.idleOn ? "Idle lock on" : "Caffeine on — idle lock off"
+            primaryHint: root.idleOn ? "Toggle idle lock (caffeine)" : "Re-enable idle lock"
+            onPrimary: {
+                root.run(Quickshell.env("HOME") + "/.config/hypr/scripts/idle-toggle.sh")
+                idleRecheck.restart()
+            }
+        }
+    }
+
+    Timer {
+        id: idleRecheck
+        interval: 800
+        onTriggered: if (!idleCheck.running) idleCheck.running = true
     }
 
     // ───────────────────────── The bar ─────────────────────────

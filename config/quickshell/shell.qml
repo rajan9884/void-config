@@ -7,9 +7,8 @@ ShellRoot {
     SysOsd {}
     OpacityMenu {}
     NetworkPanel {}
-    BluetoothPanel {}
-    AudioPanel {}
     DisplayPanel {}
+    AudioPanel {}
     Settings {}
     ThemeCarousel {}
     Notifications {}

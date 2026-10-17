@@ -5,12 +5,12 @@ import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Hyprland
 
-// Settings center: one window hosting the panel pages (audio, bluetooth,
-// display, network) plus the power profile page. Each page section is also
+// Settings center: one window hosting the panel pages (audio, display,
+// network) plus the power profile page. Each page section is also
 // reachable as its own quick-slice panel; this is the "control center"
 // entry (Wheel → Settings, `qs ipc call settings …`).
 // IPC: qs ipc call settings toggle|show|hide
-//      qs ipc call settings page audio|bluetooth|display|network|power
+//      qs ipc call settings page audio|display|network|power
 Scope {
     id: root
     property bool showing: false
@@ -19,7 +19,6 @@ Scope {
     property int pageIndex: 2 // DISPLAY
     readonly property var pages: [
         { id: "audio",     label: "AUDIO",     src: "SettingsPages/AudioPage.qml" },
-        { id: "bluetooth", label: "BLUETOOTH", src: "SettingsPages/BluetoothPage.qml" },
         { id: "display",   label: "DISPLAY",   src: "SettingsPages/DisplayPage.qml" },
         { id: "network",   label: "NETWORK",   src: "SettingsPages/NetworkPage.qml" },
         { id: "power",     label: "POWER",     src: "SettingsPages/PowerPage.qml" }
@@ -65,7 +64,6 @@ Scope {
         function hide(): void { root.closeMenu() }
         function page(target: string): void { root.showPage(target) }
         function audio(): void { root.showPage("audio") }
-        function bluetooth(): void { root.showPage("bluetooth") }
         function display(): void { root.showPage("display") }
         function network(): void { root.showPage("network") }
         function power(): void { root.showPage("power") }
@@ -117,23 +115,14 @@ Scope {
                     anchors.margins: 20
                     spacing: 12
 
-                    Row {
+                    Text {
                         width: parent.width
-                        Text {
-                            width: parent.width - 40
-                            text: "SETTINGS"
-                            color: Theme.text
-                            font.family: Theme.fontFamily
-                            font.pixelSize: 16
-                            font.bold: true
-                            font.letterSpacing: 3
-                        }
-                        Text {
-                            text: "×"
-                            color: Theme.textDim
-                            font.pixelSize: 18
-                            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.closeMenu() }
-                        }
+                        text: "SETTINGS"
+                        color: Theme.text
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 16
+                        font.bold: true
+                        font.letterSpacing: 3
                     }
 
                     // ── Tab bar ─────────────────────────────────────────

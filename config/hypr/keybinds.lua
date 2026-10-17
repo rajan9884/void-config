@@ -23,7 +23,11 @@
 --   close-window on W dropped (W = wallpaper picker) — Q still closes
 --   lock: SUPER+CTRL+L — SUPER+TAB cycles workspaces (old-arch restore)
 --   workspace-cycle: SUPER+TAB next, SUPER+SHIFT+TAB prev, SUPER+CTRL+TAB former
+--   toggle lock: idle-lock toggle SUPER+CTRL+I; bar caffeine icon same action
 --   XF86PowerOff -> quickshell powermenu
+--   battery icon click -> Settings POWER page (power profiles)
+--   drop (2026-10): SUPER+CTRL+B bluetooth panel (not wanted);
+--     SUPER+CTRL+W now network panel (was nmtui; SUPER+CTRL+N also opens it)
 
 local home = os.getenv("HOME")
 local scripts = home .. "/.config/hypr/scripts"
@@ -38,7 +42,7 @@ hl.bind(mainMod .. " + SHIFT + N", hl.dsp.exec_cmd("foot --working-directory " .
 hl.bind(mainMod .. " + ALT + Return", hl.dsp.exec_cmd("foot --working-directory " .. home .. " -e tmux"), { description = "Terminal (tmux)" })
 hl.bind(mainMod .. " + SHIFT + ALT + M", hl.dsp.exec_cmd("cliamp"), { description = "Music player (cliamp)" })
 hl.bind(mainMod .. " + CTRL + T", hl.dsp.exec_cmd("foot --working-directory " .. home .. " -e btop"), { description = "System monitor" })
-hl.bind(mainMod .. " + CTRL + W", hl.dsp.exec_cmd("foot --working-directory " .. home .. " -e nmtui"), { description = "Network connections" })
+hl.bind(mainMod .. " + CTRL + W", hl.dsp.exec_cmd("qs ipc call network toggle"), { description = "Network panel" })
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(bin .. "/thunar-cwd"), { description = "File manager (cwd)" })
 hl.bind(mainMod .. " + SHIFT + F", hl.dsp.exec_cmd(bin .. "/thunar-cwd"), { description = "File manager (cwd)" })
 hl.bind(mainMod .. " + SHIFT + ALT + F", hl.dsp.exec_cmd(bin .. "/thunar-cwd"), { description = "File manager (cwd)" })
@@ -55,7 +59,6 @@ hl.bind(mainMod .. " + CTRL + L", hl.dsp.exec_cmd("hyprlock"), { description = "
 hl.bind(mainMod .. " + GRAVE", hl.dsp.exec_cmd("qs ipc call powermenu toggle"), { description = "Power menu" })
 hl.bind(mainMod .. " + Escape", hl.dsp.exec_cmd("qs ipc call powermenu toggle"), { description = "Power menu" })
 hl.bind(mainMod .. " + CTRL + N", hl.dsp.exec_cmd("qs ipc call network toggle"), { description = "Network panel" })
-hl.bind(mainMod .. " + CTRL + B", hl.dsp.exec_cmd("qs ipc call bluetooth toggle"), { description = "Bluetooth panel" })
 hl.bind(mainMod .. " + CTRL + A", hl.dsp.exec_cmd("qs ipc call audio toggle"), { description = "Audio panel" })
 hl.bind(mainMod .. " + CTRL + D", hl.dsp.exec_cmd("qs ipc call display toggle"), { description = "Display panel" })
 hl.bind(mainMod .. " + CTRL + SHIFT + Space", hl.dsp.exec_cmd("qs ipc call themes toggle"), { description = "Theme carousel" })

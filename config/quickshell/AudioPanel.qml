@@ -82,23 +82,14 @@ Scope {
                     anchors.fill: parent
                     anchors.margins: 20
                     spacing: 12
-                    Row {
+                    Text {
                         width: parent.width
-                        Text {
-                            width: parent.width - 40
-                            text: "AUDIO"
-                            color: Theme.text
-                            font.family: Theme.fontFamily
-                            font.pixelSize: 16
-                            font.bold: true
-                            font.letterSpacing: 3
-                        }
-                        Text {
-                            text: "×"
-                            color: Theme.textDim
-                            font.pixelSize: 18
-                            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.closeMenu() }
-                        }
+                        text: "AUDIO"
+                        color: Theme.text
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 16
+                        font.bold: true
+                        font.letterSpacing: 3
                     }
                     Rectangle { width: parent.width; height: 1; color: Theme.border }
                     Item {

@@ -19,7 +19,7 @@ Scope {
         hidden: "stats,wall",
         startMods: "stats,ws",
         centerMods: "clock",
-        endMods: "caffeine,media,volume,battery,net,notif,wall,power"
+        endMods: "media,caffeine,volume,battery,net,notif,wall,power"
     })
     readonly property var positions: ["top", "right", "bottom", "left"]
     readonly property var styles: ["floating", "joined", "strip"]
@@ -183,9 +183,16 @@ Scope {
     }
     readonly property var endList: {
         const a = csv(cfg.endMods).filter(valid);
-        // caffeine always leads the right side (before the audio modules);
-        // drop a stale "caffeine" entry in saved config so it can't render twice.
-        const out = ["caffeine"].concat(a.filter(x => x !== "caffeine" && x !== "logo"));
+        // caffeine sits after the playing-media module and before the audio
+        // (volume) one; drop a stale "caffeine" entry in saved config so it
+        // can't render twice.
+        let out = a.filter(x => x !== "caffeine" && x !== "logo");
+        const iMedia = out.indexOf("media");
+        if (iMedia >= 0) out.splice(iMedia + 1, 0, "caffeine");
+        else {
+            const iVolume = out.indexOf("volume");
+            out.splice(iVolume >= 0 ? iVolume : out.length, 0, "caffeine");
+        }
         return out.concat(moduleIds.filter(x =>
             startList.indexOf(x) < 0 && centerList.indexOf(x) < 0 && out.indexOf(x) < 0));
     }

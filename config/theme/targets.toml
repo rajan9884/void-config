@@ -1,0 +1,29 @@
+# Each target: input template -> output file. Optional `reload` is an argv list
+# that runs once after ALL targets were written successfully.
+
+[foot]
+input  = "~/.config/theme/templates/foot.ini"
+output = "~/.config/foot/colors.ini"
+reload = ["python3", "~/.config/theme/bin/foot-live.py"]
+[hyprlock]
+input  = "~/.config/theme/templates/hyprlock-colors.conf"
+output = "~/.config/hypr/hyprlock-colors.conf"
+[gtk3]
+input  = "~/.config/theme/templates/gtk-colors.css"
+output = "~/.config/gtk-3.0/colors.css"
+[gtk4]
+input  = "~/.config/theme/templates/gtk-colors.css"
+output = "~/.config/gtk-4.0/colors.css"
+[quickshell]
+input  = "~/.config/theme/templates/quickshell-theme.json"
+output = "~/.cache/theme/quickshell-theme.json"
+[cava]
+input  = "~/.config/theme/templates/cava-theme"
+output = "~/.config/cava/themes/theme"
+reload = ["pkill", "-USR2", "-f", "-x", "cava"]
+[starship]
+input  = "~/.config/theme/templates/starship.toml"
+output = "~/.config/starship.toml"
+[helium]
+input  = "~/.config/theme/templates/helium-theme.json"
+output = "~/.config/helium-theme/manifest.json"

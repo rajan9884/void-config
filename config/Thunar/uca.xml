@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<actions>
+<action>
+	<icon>utilities-terminal</icon>
+	<name>Open Terminal Here</name>
+	<submenu></submenu>
+	<unique-id>1792052390587532-1</unique-id>
+	<command>foot --working-directory %f</command>
+	<description>Example for a custom action</description>
+	<range></range>
+	<patterns>*</patterns>
+	<startup-notify/>
+	<directories/>
+</action>
+<action>
+	<icon>document-preview</icon>
+	<name>Preview (Read-Only)</name>
+	<submenu></submenu>
+	<unique-id>1791901813919256-2</unique-id>
+	<command>$HOME/.local/bin/text-preview %F</command>
+	<description>Quick read-only floating preview (Space, q to close). Cannot modify the file.</description>
+	<range></range>
+	<patterns>*</patterns>
+	<startup-notify/>
+	<text-files/>
+</action>
+</actions>

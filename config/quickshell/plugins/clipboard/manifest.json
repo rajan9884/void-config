@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "hyprqt.clipboard",
+  "name": "Clipboard",
+  "version": "1.0.0",
+  "author": "Rajan",
+  "description": "Clipboard history: list on the left, full preview on the right",
+  "kinds": [
+    "overlay"
+  ],
+  "keepLoaded": true,
+  "entryPoints": {
+    "overlay": "Clipboard.qml"
+  }
+}

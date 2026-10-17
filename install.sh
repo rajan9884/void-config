@@ -133,7 +133,7 @@ EOF
     else
         warn "tuigreet not installed; skipping /etc/greetd/config.toml"
     fi
-    # Hyprland needs a session bus for waybar/mako/portals, but greetd runs the
+    # Hyprland needs a session bus for portals/quickshell, but greetd runs the
     # session Exec= line verbatim (no shell, no bus). Wrap it so every login
     # gets DBUS_SESSION_BUS_ADDRESS from the start.
     if [ -f /usr/share/wayland-sessions/hyprland.desktop ]; then
@@ -148,7 +148,7 @@ EOF
             'context.exec = [' \
             '    { path = "/usr/sbin/wireplumber" args = "" }' \
             ']' | "$PRIV" tee /etc/pipewire/pipewire.conf.d/10-wireplumber.conf >/dev/null
-        printf '%s\n' '# void-config: PulseAudio compatibility for pactl/pavucontrol/waybar.' \
+        printf '%s\n' '# void-config: PulseAudio compatibility for pactl/pavucontrol.' \
             'context.exec = [' \
             '    { path = "/usr/sbin/pipewire-pulse" args = "" }' \
             ']' | "$PRIV" tee /etc/pipewire/pipewire.conf.d/20-pipewire-pulse.conf >/dev/null
@@ -179,8 +179,6 @@ fi
 # ~/.config/starship.toml is NOT linked: matugen generates it directly
 # from config/matugen/templates/starship.toml on every wallpaper
 # switch, so there is no tracked source file for it.
-# ~/.config/swayosd/ is NOT linked either: the repo ships no tracked files
-# there, matugen writes style.css into the real dir directly.
 link_config() { # link_config <app>
     local name="$1"
     local src="$REPO_DIR/config/$name"
@@ -232,25 +230,14 @@ link_config_file() { # link_config_file <repo-path> <config-relpath>
 
 if [ "$DO_LINKS" -eq 1 ]; then
     log "Linking ~/.config directories (backups go to $BACKUP_DIR)"
-    for app in hypr waybar rofi foot alacritty btop matugen mako zathura \
+    for app in hypr quickshell foot alacritty btop cava Thunar matugen zathura \
                xdg-desktop-portal nvim gtk-3.0 gtk-4.0 fastfetch environment.d; do
         link_config "$app"
     done
-    # NOTE: there is no config/hypr in this repo. The Hyprland config lives
-    # in its own repository (https://github.com/rajan9884/hypr) and is
-    # cloned straight into ~/.config/hypr below — kept separate because it
-    # was ported from the Arch setup and evolves on its own cadence.
-    if [ ! -e "$HOME/.config/hypr" ]; then
-        if git clone https://github.com/rajan9884/hypr "$HOME/.config/hypr" 2>/dev/null; then
-            log "  cloned hypr config"
-        else
-            warn "hypr config clone failed; clone https://github.com/rajan9884/hypr to ~/.config/hypr manually"
-        fi
-    fi
     # Single versioned file inside ~/.config (not a directory).
     link_config_file config/mimeapps.list mimeapps.list
     # Generated-only target dirs: matugen writes into these, nothing tracked.
-    mkdir -p "$HOME/.config/swayosd" "$HOME/.config/helium-theme"
+    mkdir -p "$HOME/.config/helium-theme"
 
     log "Linking shell startup files"
     for f in zshrc zprofile bashrc bash_profile asoundrc; do
@@ -386,7 +373,7 @@ if [ ! -s "$HOME/.cache/current-wallpaper" ]; then
     else
         warn "No wallpaper selected yet: log into Hyprland, then run"
         warn "  ~/.config/hypr/scripts/hypr-wall.sh ~/path/to/wallpaper.jpg"
-        warn "to generate the matugen theme (waybar/rofi/alacritty/starship follow it)."
+        warn "to generate the matugen theme (alacritty/starship follow it)."
     fi
 fi
 cat <<'EOF'

@@ -1,26 +1,33 @@
 # Matugen-generated palette outputs (regenerated on every wallpaper switch
-# via hypr-wall.sh; templates live in config/matugen/templates/)
-config/mako/colors
-config/rofi/colors.rasi
+# via theme.py; templates live in config/matugen/templates/ and
+# config/theme/templates/) — and other generated outputs.
 config/foot/colors.ini
 config/alacritty/colors.toml
-config/waybar/colors.css
 config/btop/themes/
+config/gtk-3.0/colors.css
 config/gtk-3.0/gtk.css
+config/gtk-4.0/colors.css
 config/gtk-4.0/gtk.css
 config/gtk-4.0/gtk-dark.css
+config/cava/themes/theme
 config/nvim/lua/matugen-colors.lua
 # ~/.config/starship.toml is generated directly by matugen
 # (template config/matugen/templates/starship.toml
 # is the versioned source of truth) — never tracked.
-# ~/.config/swayosd/style.css likewise (template config/matugen/templates/swayosd.css).
-# Current wallpaper pointer, rewritten by hypr-wall.sh on every switch
-# Waybar style symlinks (managed by waybar-theme-toggle.sh)
-config/waybar/config.jsonc
-config/waybar/style.css
+# Current wallpaper pointer / lock screen background caches
+# (written by theme.py under ~/.local/state/theme and ~/.cache/)
 # Editor local state
 config/nvim/lazy-lock.json
 config/nvim/lazyvim.json
 # GTK runtime bookmarks
 config/gtk-3.0/bookmarks
 config/nvim/starter/
+# Runtime state (modules re-create these with defaults when missing)
+config/quickshell/state/
+# Generated targets
+config/hypr/hyprlock-colors.conf
+# Editor bytecode artifacts
+__pycache__/
+# Working-at-the-time backups (not part of the dotfiles)
+config.backup/
+shell.backup/

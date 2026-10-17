@@ -93,3 +93,6 @@ case ":$PATH:" in *":$HOME/.local/bin:"*) ;; *) export PATH="$HOME/.local/bin:$P
 
 # Added by Antigravity CLI installer
 export PATH="$HOME/.opencode/bin:$PATH"
+
+# kilo
+export PATH=/home/rajan/.kilo/bin:$PATH

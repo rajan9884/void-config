@@ -1,8 +1,5 @@
 NetworkManager
-mako
-SwayOSD
 Vulkan-Tools
-Waybar
 alsa-pipewire
 alsa-utils
 atuin
@@ -16,7 +13,6 @@ btop
 cargo
 chromium
 chrony
-cliphist
 cronie
 curl
 dejavu-fonts-ttf
@@ -84,9 +80,6 @@ python3-SecretStorage
 qt5-wayland
 qt6-wayland
 ripgrep
-rofi
-rofi-calc
-rofimoji
 rtkit
 rust
 satty

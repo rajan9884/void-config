@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "hyprQT Helium Theme",
+  "version": "1.0.0",
+  "description": "Auto-generated browser theme from the current wallpaper (hyprQT)",
+  "theme": {
+    "colors": {
+      "frame": [{{bg|rgb}}],
+      "frame_inactive": [{{bg|rgb}}],
+      "frame_incognito": [{{bg|rgb}}],
+      "frame_incognito_inactive": [{{bg|rgb}}],
+      "toolbar": [{{bg|rgb}}],
+      "tab_text": [{{fg|rgb}}],
+      "tab_background_text": [{{fg_muted|rgb}}],
+      "tab_background_inactive": [{{bg|rgb}}],
+      "tab_background_active": [{{bg_hover|rgb}}],
+      "toolbar_text": [{{fg|rgb}}],
+      "bookmark_text": [{{fg|rgb}}],
+      "ntp_background": [{{bg|rgb}}],
+      "ntp_text": [{{fg|rgb}}],
+      "ntp_link": [{{accent|rgb}}],
+      "button_background": [{{bg_hover|rgb}}],
+      "control_background": [{{bg_hover|rgb}}],
+      "omnibox_background": [{{bg_hover|rgb}}],
+      "omnibox_text": [{{fg|rgb}}],
+      "toolbar_button_icon": [{{fg|rgb}}],
+      "search_entry_background": [{{bg_hover|rgb}}]
+    }
+  }
+}

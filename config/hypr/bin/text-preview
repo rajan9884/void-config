@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# text-preview — true read-only floating preview for Thunar (Space key).
+# Thunar has no built-in Sushi-style Space preview, so this custom action
+# emulates it with a pager (bat/less inside foot). A pager can never modify
+# the file, unlike Mousepad whose "[Read Only]" still allows typing.
+# Hyprland floats windows with class "text-preview" (see window-rules.lua).
+# Quit the preview with q (Sushi-like: Space opens, q closes).
+set -euo pipefail
+
+if [[ $# -eq 0 ]]; then
+  echo "Usage: text-preview FILE..." >&2
+  exit 1
+fi
+
+paths=()
+for src in "$@"; do
+  # Thunar passes file:// URIs or plain paths; normalize to path.
+  path="${src#file://}"
+  [[ -f "$path" ]] || continue
+  paths+=("$path")
+done
+
+[[ ${#paths[@]} -gt 0 ]] || exit 0
+
+if command -v bat >/dev/null 2>&1; then
+  exec foot --app-id=text-preview -e bat --paging=always --style=plain --pager="less -R" "${paths[@]}"
+else
+  exec foot --app-id=text-preview -e less "${paths[@]}"
+fi

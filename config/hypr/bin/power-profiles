@@ -1,0 +1,230 @@
+#!/usr/bin/env bash
+# Power profile manager (performance/balanced/power-saver with AC/battery memory).
+#
+#   power-profiles list                 profiles bottom-up (current first), "<profile><TAB><0|1>"
+#   power-profiles get                  current active profile
+#   power-profiles set <profile>        switch and remember for the current power source
+#   power-profiles autodetect           apply remembered/fallback for AC or battery
+#   power-profiles watch                apply once, then periodically when power source changes
+#   power-profiles menu                 QtQuick switcher menu (power profile switcher)
+#
+STATE_DIR="${POWER_PROFILES_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/power-profiles}"
+#
+usage() {
+  echo "Usage: power-profiles [list|get|set <profile>|autodetect|watch|menu]" >&2
+  exit 1
+}
+#
+list_profiles() {
+  powerprofilesctl list 2>/dev/null |
+    awk '/^\s*[* ]\s*[a-zA-Z0-9-]+:$/ {
+      active = ($1 == "*") ? 1 : 0
+      gsub(/^[*[:space:]]+|:$/, "")
+      print $0 (active ? "\t1" : "\t0")
+    }' |
+    tac
+}
+#
+current_profile() {
+  powerprofilesctl get 2>/dev/null
+}
+#
+profile_available() {
+  local wanted=$1 p active
+  while read -r p active; do
+    [[ -z $p && -z $active ]] && continue
+    if [[ $p == "$wanted" ]]; then
+      return 0
+    fi
+  done < <(list_profiles)
+  return 1
+}
+#
+on_battery() {
+  [[ $(busctl get-property org.freedesktop.UPower /org/freedesktop/UPower org.freedesktop.UPower OnBattery 2>/dev/null) == "b true" ]]
+}
+#
+apply_profile() {
+  powerprofilesctl set "$1" || return 1
+  if [[ -n ${SAVE_KEY:-} ]]; then
+    mkdir -p "$STATE_DIR"
+    printf '%s\n' "$1" >"$STATE_DIR/$SAVE_KEY"
+  fi
+}
+#
+do_autodetect() {
+  local key stored="" profile
+  if on_battery; then key=battery; else key=ac; fi
+  if [[ -r $STATE_DIR/$key ]]; then
+    stored=$(<"$STATE_DIR/$key")
+  fi
+  if [[ -n $stored ]] && profile_available "$stored"; then
+    profile=$stored
+  elif [[ $key == ac ]] && profile_available performance; then
+    profile=performance
+  else
+    profile=balanced
+  fi
+  apply_profile "$profile"
+}
+#
+cmd_watch() {
+  local lock="${XDG_RUNTIME_DIR:-/tmp}/power-profiles-watch.lock"
+  if [[ ${POWER_PROFILES_WATCH_LOCKED:-} != 1 ]]; then
+    flock -n "$lock" true 2>/dev/null || exit 0
+    exec flock -n "$lock" env POWER_PROFILES_WATCH_LOCKED=1 "$0" watch
+  fi
+
+  # If we die, take the udev monitor with us: it inherits the lock fd
+  # through the process substitution below, and a lingering orphan
+  # would keep the lock held so a replacement watcher refuses to start.
+  # (No EXIT trap: it would also fire in every $(...) subshell, where
+  # $$ != BASHPID for the subshell.)
+  trap '[[ ${BASHPID:-$$} == $$ ]] && pkill -P $$ udevadm 2>/dev/null; exit 0' HUP INT TERM
+
+  # Wait for power-profiles-daemon before the initial apply (boot race).
+  local i
+  for i in $(seq 1 30); do
+    powerprofilesctl get >/dev/null 2>&1 && break
+    sleep 1
+  done
+  do_autodetect || true
+
+  local last cur line rc
+  if on_battery; then last=battery; else last=ac; fi
+
+  check_and_apply() {
+    if on_battery; then cur=battery; else cur=ac; fi
+    if [[ $cur != "$last" ]]; then
+      last=$cur
+      do_autodetect || true
+    fi
+  }
+
+  # Outer loop restarts udevadm if it ever dies; inner read timeout
+  # (10s) gives the periodic safety re-check.
+  while true; do
+    while true; do
+      if IFS= read -r -t 10 line; then
+        rc=0
+      else
+        rc=$?
+      fi
+      if [[ $rc -gt 128 ]]; then
+        check_and_apply # read timeout: periodic re-check
+        continue
+      fi
+      # Normal line -> parse it
+      if [[ $line == *"state changed"* && $line == *"charging"* ]]; then
+        check_and_apply
+      elif [[ $line == *"online"* && $line == *"AC Power Device"* ]]; then
+        check_and_apply
+      fi
+    done < <(udevadm monitor --subsystem=power_supply --udev)
+  done
+}
+#
+cmd_menu() {
+  local current entries choice chosen
+  current=$(current_profile)
+  entries=()
+  while read -r p active; do
+    [[ -z $p && -z $active ]] && continue
+    if [[ $active == 1 ]]; then
+      entries+=("$p (current)")
+    else
+      entries+=("$p")
+    fi
+  done < <(list_profiles)
+
+  # If no entries, exit
+  if [[ ${#entries[@]} -eq 0 ]]; then
+    echo "No profiles found" >&2
+    exit 1
+  fi
+
+  # QtQuick replacement for rofi menu
+  local TMPQML
+  TMPQML=$(mktemp --suffix=.qml)
+  trap "rm -f $TMPQML" EXIT
+
+  # Build QML content with a ListModel for entries
+  {
+    echo "import QtQuick 2.15"
+    echo "import QtQuick.Controls 2.15"
+    echo ""
+    echo "ApplicationWindow {"
+    echo "    id: window"
+    echo "    visible: true"
+    echo "    width: 250"
+    echo "    height: 200"
+    echo "    flags: Qt.ToolTip | Qt.X11BypassWindowManagerHint"
+    echo "    modality: Qt.ApplicationModal"
+    echo ""
+    echo "    ListView {"
+    echo "      id: listView"
+    echo "      anchors.fill: parent"
+    echo "      anchors.margins: 10"
+    echo "      model: entriesModel"
+    echo "      delegate: ItemDelegate {"
+    echo "        width: parent.width"
+    echo "        height: 40"
+    echo "        text: modelData"
+    echo "        onClicked: {"
+    echo "          Qt.quit(modelData)"
+    echo "        }"
+    echo "        highlight: Rectangle { color: \"lightblue\"; radius: 4 }"
+    echo "      }"
+    echo "      ScrollIndicator.vertical: ScrollIndicator { }"
+    echo "    }"
+    echo ""
+    echo "    Keys.onEscaped: {"
+    echo "      Qt.quit(\"\")"
+    echo "    }"
+    echo ""
+    echo "    Component.onCompleted: {"
+    echo "      listView.focus = true"
+    echo "    }"
+    echo "  }"
+    echo ""
+    echo "  ListModel {"
+    echo "      id: entriesModel"
+    for entry in "${entries[@]}"; do
+      # Escape double quotes and backslashes for QML string
+      local escaped_entry
+      escaped_entry=$(printf '%s' "$entry" | sed 's/\\/\\\\/g; s/"/\\"/g')
+      echo "      ListElement { text: \"$escaped_entry\" }"
+    done
+    echo "  }"
+  } > "$TMPQML"
+
+  choice=$(timeout 5s qmlscene "$TMPQML" 2>/dev/null) || exit 0
+  [ -z "${choice:-}" ] && exit 0
+
+  echo "$choice"
+}
+#
+case "${1:-}" in
+  list)
+    list_profiles
+    ;;
+  get)
+    current_profile
+    ;;
+  set)
+    [[ -n $2 ]] || { echo "power-profiles set: missing profile argument" >&2; usage; }
+    apply_profile "$2"
+    ;;
+  autodetect)
+    do_autodetect
+    ;;
+  watch)
+    cmd_watch
+    ;;
+  menu)
+    cmd_menu
+    ;;
+  *)
+    usage
+    ;;
+esac

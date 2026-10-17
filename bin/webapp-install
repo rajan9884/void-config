@@ -61,7 +61,7 @@ install_user_icon() {
 
 ensure_hicolor_theme() {
   # gtk-update-icon-cache is a no-op without index.theme, leaving Icon=<name>
-  # unresolvable for rofi/GIO. Seed the user hicolor theme once from system.
+  # unresolvable for GUI launchers/GIO. Seed the user hicolor theme once from system.
   local theme_dir="$HOME/.local/share/icons/hicolor"
   if [[ ! -f $theme_dir/index.theme && -f /usr/share/icons/hicolor/index.theme ]]; then
     mkdir -p "$theme_dir"
@@ -279,7 +279,7 @@ fi
 # Default Exec quotes the URL as one Exec-spec argument; the whole line then gets
 # the file-syntax escaping below (unescaped first at read time per spec, so the
 # layers compose). $CUSTOM_EXEC is a full command line, so it gets file-syntax only.
-# Absolute launcher path: GUI launchers (rofi drun, GIO) inherit the systemd
+# Absolute launcher path: GUI launchers and GIO inherit the systemd
 # user PATH without ~/.local/bin, so a bare name fails with
 # "Failed to execute child process". Resolve once at install time.
 WEBAPP_LAUNCHER="$(command -v webapp-launch 2>/dev/null || printf '%s/.local/bin/webapp-launch' "$HOME")"
@@ -296,7 +296,7 @@ mkdir -p "$DESKTOP_DIR"
 
 name_field=$(desktop_string_escape "$APP_NAME")
 exec_field=$(desktop_string_escape "$EXEC_COMMAND")
-# Absolute path: rofi uses Papirus-Dark, which ships its own generic `x` and
+# Absolute path: some icon themes (e.g. Papirus-Dark with its own generic `x` and
 # `whatsapp` icons that shadow our hicolor theme-name icons. A file path
 # bypasses theme lookup entirely so the downloaded brand icon always wins.
 if [[ -n ${ICON_PATH:-} ]]; then

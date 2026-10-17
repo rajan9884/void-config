@@ -1,3 +1,4 @@
+//@ pragma UseQApplication
 import Quickshell
 import "plugins/clipboard" as ClipboardPlugin
 import "plugins/webapps" as WebappsPlugin

@@ -11,3 +11,7 @@ if [ -z "$WAYLAND_DISPLAY" ] && { [ "$XDG_VTNR" = 1 ] || [ "$(tty 2>/dev/null)" 
 
     exec "$HOME/.local/bin/start-hyprland"
 fi
+
+
+# Added by Antigravity CLI installer
+export PATH="/home/rajan/.local/bin:$PATH"

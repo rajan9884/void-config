@@ -113,3 +113,7 @@ export PATH="$HOME/.opencode/bin:$PATH"
 
 # kilo
 export PATH=/home/rajan/.kilo/bin:$PATH
+
+
+# Added by Antigravity CLI installer
+export PATH="/home/rajan/.local/bin:$PATH"

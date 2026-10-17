@@ -6,6 +6,7 @@ import Quickshell.Wayland
 import Quickshell.Hyprland
 import Quickshell.Services.Pipewire
 import Quickshell.Services.UPower
+import Quickshell.Services.SystemTray
 
 Scope {
     id: root
@@ -19,11 +20,14 @@ Scope {
         hidden: "stats,wall",
         startMods: "stats,ws",
         centerMods: "clock",
-        endMods: "media,caffeine,volume,battery,net,notif,wall,power"
+        endMods: "media,tray,caffeine,volume,battery,net,notif,wall,power"
     })
     readonly property var positions: ["top", "right", "bottom", "left"]
     readonly property var styles: ["floating", "joined", "strip"]
     readonly property var statsModes: ["default", "compact"]
+
+    // Active tray entry whose popup menu is currently open
+    property var activeTrayEntry: null
 
     // Idle-lock (hypridle) state for the caffeine module; polled so the
     // icon tracks toggles from any source (bar click, SUPER+CTRL+I, CLI).
@@ -146,6 +150,7 @@ Scope {
                                               tip: "Notifications", hint: "Toggle notification panel" },
         { id: "wall",     l: "Wallpapers",    cmd: "qs -n -p ~/.config/quickshell/hyprquickpaper", g: "\uDB80\uDEE9",
                                               tip: "Wallpapers", hint: "Open wallpaper picker" },
+        { id: "tray",     l: "System tray" },
         { id: "power",    l: "Power",         cmd: "qs ipc call powermenu toggle", g: "\u23FB",
                                           tip: "Power menu", hint: "Open", fixed: true }
     ]
@@ -153,7 +158,7 @@ Scope {
     readonly property var defMap: moduleDefs.reduce((m, d) => { m[d.id] = d; return m; }, {})
     readonly property var comps: ({
         stats: statsC, ws: wsC, media: mediaC, volume: volumeC, battery: batteryC,
-        logo: logoC, caffeine: caffeineC, icon: iconC
+        logo: logoC, caffeine: caffeineC, tray: trayC, icon: iconC
     })
 
     function csv(str) { return str === "" ? [] : str.split(","); }
@@ -169,6 +174,8 @@ Scope {
         case "stats":   return !vertical || cfg.statsMode === "compact";   // compact fits vertical bars
         case "media":   return Marquee.player !== null && Marquee.title !== "";
         case "battery": return battery !== null;
+        // tray exists only while apps register SNI items (i.e. while used)
+        case "tray":    return SystemTray.items.values.length > 0;
         default:        return true;
         }
     }
@@ -182,19 +189,35 @@ Scope {
         return a.indexOf("clock") >= 0 ? a : ["clock"].concat(a);
     }
     readonly property var endList: {
-        const a = csv(cfg.endMods).filter(valid);
-        // caffeine sits after the playing-media module and before the audio
-        // (volume) one; drop a stale "caffeine" entry in saved config so it
-        // can't render twice.
-        let out = a.filter(x => x !== "caffeine" && x !== "logo");
-        const iMedia = out.indexOf("media");
-        if (iMedia >= 0) out.splice(iMedia + 1, 0, "caffeine");
-        else {
-            const iVolume = out.indexOf("volume");
-            out.splice(iVolume >= 0 ? iVolume : out.length, 0, "caffeine");
+        let a = cfg.endMods.split(",").map(m => m.trim()).filter(m => m !== "" && valid(m));
+        // Remove duplicates while preserving order
+        const seen = {};
+        let deduped = a.filter(m => {
+            if (seen[m]) {
+                return false;
+            }
+            seen[m] = true;
+            return true;
+        });
+        // Ensure tray and caffeine sit just before the audio (volume) module
+        const iVol = deduped.indexOf("volume");
+        if (iVol >= 0) {
+            deduped = deduped.filter(x => x !== "tray" && x !== "caffeine");
+            const newIVol = deduped.indexOf("volume");
+            if (!startList.includes("tray") && !centerList.includes("tray")) {
+                deduped.splice(newIVol, 0, "tray");
+            }
+            if (!startList.includes("caffeine") && !centerList.includes("caffeine")) {
+                deduped.splice(deduped.indexOf("volume"), 0, "caffeine");
+            }
         }
-        return out.concat(moduleIds.filter(x =>
-            startList.indexOf(x) < 0 && centerList.indexOf(x) < 0 && out.indexOf(x) < 0));
+        // Remove any that are already in startList or centerList
+        const filtered = deduped.filter(m => !startList.includes(m) && !centerList.includes(m));
+        // Append any remaining moduleIds not in startList, centerList, or filtered
+        return filtered.concat(moduleIds.filter(m =>
+            !startList.includes(m) &&
+            !centerList.includes(m) &&
+            !filtered.includes(m)));
     }
 
     // ───────────────────────── State / IPC ─────────────────────────
@@ -476,7 +499,7 @@ Scope {
                 if (it.disabled) return;
                 if (mouse.button === Qt.LeftButton) it.primary();
                 else if (mouse.button === Qt.MiddleButton) it.tertiary();
-                else it.secondaryAction();
+                else if (mouse.button === Qt.RightButton) it.secondary();
             }
             onWheel: wheel => {
                 wheel.accepted = it.scrollHint !== "" && !it.disabled;
@@ -852,6 +875,297 @@ Scope {
         }
     }
 
+    // Λ System tray (StatusNotifierItem): apps register an icon while they run
+    // (e.g. ChatGPT in tray, pavucontrol, NetworkManager applet). Items appear
+    // Λ System tray (StatusNotifierItem): apps register an icon while they run
+    // (e.g. ChatGPT in tray, pavucontrol, NetworkManager applet). Items appear
+    // as soon as the app registers and vanish when it exits — nothing is shown
+    // when nothing is running. Left click activates (opens the window); if the
+    // item is menu-only (ItemIsMenu) it opens its menu instead. Right click
+    // opens a native themed QML menu matching the bar aesthetics.
+    Component {
+        id: trayC
+        Item {
+            id: trayRoot
+            readonly property var items: SystemTray.items.values
+            readonly property int side: root.sz.icon   // icon pixel size (16)
+
+            implicitWidth: root.vertical ? root.panelThick : trayLane.implicitWidth
+            implicitHeight: root.vertical
+                ? Math.max(20, trayLane.implicitHeight + 8)
+                : Math.max(root.panelThick - 2, side + 4)
+
+            Lane {
+                id: trayLane
+                anchors.centerIn: parent
+                gap: 2
+
+                Repeater {
+                    model: trayRoot.items
+
+                    delegate: Interactive {
+                        id: trayEntry
+                        required property var modelData
+                        readonly property string name: modelData.tooltipTitle !== "" ? modelData.tooltipTitle : (modelData.title !== "" ? modelData.title : modelData.id)
+                        readonly property alias entryOpener: entryOpener
+                        readonly property var menuEntries: (entryOpener && entryOpener.children && entryOpener.children.values) ? entryOpener.children.values : []
+
+                        QsMenuOpener {
+                            id: entryOpener
+                            menu: trayEntry.modelData.hasMenu ? trayEntry.modelData.menu : null
+                        }
+
+                        function toggleMenu() {
+                            if (root.activeTrayEntry === trayEntry) {
+                                root.activeTrayEntry = null;
+                            } else {
+                                root.activeTrayEntry = trayEntry;
+                            }
+                        }
+
+                        implicitWidth: trayRoot.side + 12
+                        implicitHeight: root.vertical ? trayRoot.side + 8 : trayRoot.side + 4
+
+                        active: root.activeTrayEntry === trayEntry
+                        interactive: true
+                        tip: name
+                        primaryHint: modelData.onlyMenu ? (root.activeTrayEntry === trayEntry ? "Close menu" : "Open menu") : "Activate"
+                        secondaryHint: modelData.hasMenu ? (root.activeTrayEntry === trayEntry ? "Close menu" : "Open menu") : ""
+
+                        onPrimary: {
+                            if (trayEntry.modelData.onlyMenu) {
+                                trayEntry.toggleMenu();
+                            } else {
+                                if (typeof trayEntry.modelData.activate === 'function') {
+                                    trayEntry.modelData.activate();
+                                } else if (trayEntry.modelData.hasMenu) {
+                                    trayEntry.toggleMenu();
+                                }
+                            }
+                        }
+                        onSecondary: {
+                            trayEntry.toggleMenu();
+                        }
+
+                        Image {
+                            anchors.centerIn: parent
+                            source: trayEntry.modelData.icon
+                            sourceSize.width: trayRoot.side
+                            sourceSize.height: trayRoot.side
+                            fillMode: Image.PreserveAspectFit
+                            smooth: true
+                        }
+                    }
+                }
+            }
+
+            LazyLoader {
+                active: root.activeTrayEntry !== null
+
+                PopupWindow {
+                    id: trayMenuPopup
+                    readonly property var target: root.activeTrayEntry
+                    readonly property var win: target ? target.QsWindow.window : null
+                    readonly property point p: win && target ? win.contentItem.mapFromItem(target, 0, 0) : Qt.point(0, 0)
+
+                    anchor.window: win
+                    anchor.adjustment: PopupAdjustment.Slide | PopupAdjustment.Flip
+                    anchor.rect.x: root.vertical
+                        ? (cfg.position === "left" ? p.x + (target ? target.width : 0) + 6
+                                                   : p.x - implicitWidth - 6)
+                        : (win ? Math.max(8, Math.min(win.width - implicitWidth - 8, p.x + ((target ? target.width : 0) - implicitWidth) / 2)) : p.x)
+                    anchor.rect.y: root.vertical
+                        ? (win ? Math.max(8, Math.min(win.height - implicitHeight - 8, p.y + ((target ? target.height : 0) - implicitHeight) / 2)) : p.y)
+                        : (cfg.position === "top" ? p.y + (target ? target.height : 0) + 6
+                                                  : p.y - implicitHeight - 6)
+
+                    implicitWidth: 200
+                    implicitHeight: menuCol.implicitHeight + 12
+                    color: "transparent"
+                    visible: true
+                    grabFocus: true
+
+                    onVisibleChanged: {
+                        if (!visible) {
+                            root.activeTrayEntry = null;
+                        }
+                    }
+
+                    Connections {
+                        target: Hyprland
+                        function onActiveToplevelChanged() { root.activeTrayEntry = null; }
+                        function onFocusedWorkspaceChanged() { root.activeTrayEntry = null; }
+                    }
+
+                    Rectangle {
+                        id: menuCard
+                        anchors.fill: parent
+                        radius: Theme.radius
+                        color: Qt.rgba(Theme.bgPanel.r, Theme.bgPanel.g, Theme.bgPanel.b, 0.94)
+                        border.width: 1
+                        border.color: root.borderColor
+                        focus: true
+                        Component.onCompleted: menuCard.forceActiveFocus()
+                        Keys.onEscapePressed: {
+                            root.activeTrayEntry = null;
+                        }
+
+                        Column {
+                            id: menuCol
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.top: parent.top
+                            anchors.margins: 6
+                            spacing: 2
+
+                            Text {
+                                visible: menuRepeater.count === 0
+                                text: "No menu items"
+                                color: Theme.textDim
+                                font.family: Theme.fontFamily
+                                font.pixelSize: 12
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                topPadding: 6
+                                bottomPadding: 6
+                            }
+
+                            Repeater {
+                                id: menuRepeater
+                                model: (root.activeTrayEntry && root.activeTrayEntry.menuEntries)
+                                    ? root.activeTrayEntry.menuEntries
+                                    : []
+
+                                delegate: Item {
+                                    id: itemDelegate
+                                    required property var modelData
+                                    readonly property bool isSep: modelData.isSeparator
+                                    readonly property bool isEnabled: modelData.enabled !== false
+
+                                    readonly property var parts: (modelData.text && typeof modelData.text === "string") ? modelData.text.split("\t") : [""]
+                                    readonly property string itemText: parts[0]
+                                    readonly property string itemShortcut: parts.length > 1 ? parts[1] : ""
+
+                                    width: menuCol.width
+                                    height: isSep ? 7 : 32
+                                    visible: isSep || (itemText && itemText.length > 0)
+
+                                    Rectangle {
+                                        visible: itemDelegate.isSep
+                                        anchors.centerIn: parent
+                                        width: parent.width - 8
+                                        height: 1
+                                        color: Qt.alpha(Theme.border, 0.7)
+                                    }
+
+                                    Rectangle {
+                                        id: itemBox
+                                        visible: !itemDelegate.isSep
+                                        anchors.fill: parent
+                                        radius: Math.max(4, Theme.radius - 4)
+                                        color: itemMa.pressed && itemDelegate.isEnabled
+                                            ? Qt.alpha(Theme.accent, 0.35)
+                                            : (itemMa.containsMouse && itemDelegate.isEnabled)
+                                                ? Qt.alpha(Theme.accent, 0.18)
+                                                : "transparent"
+                                        opacity: itemDelegate.isEnabled ? 1.0 : 0.4
+                                        Behavior on color { ColorAnimation { duration: 80 } }
+
+                                        MouseArea {
+                                            id: itemMa
+                                            anchors.fill: parent
+                                            hoverEnabled: itemDelegate.isEnabled
+                                            cursorShape: itemDelegate.isEnabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+
+                                            onClicked: {
+                                                if (!itemDelegate.isEnabled) return;
+                                                if (typeof itemDelegate.modelData.triggered === "function") {
+                                                    itemDelegate.modelData.triggered();
+                                                }
+                                                root.activeTrayEntry = null;
+                                            }
+                                        }
+
+                                        Text {
+                                            id: checkIcon
+                                            anchors.left: parent.left
+                                            anchors.leftMargin: 8
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            visible: itemDelegate.modelData.buttonType !== undefined && itemDelegate.modelData.buttonType !== 0
+                                            font.family: Theme.iconFont
+                                            font.pixelSize: 13
+                                            color: Theme.accent
+                                            text: {
+                                                if (itemDelegate.modelData.buttonType === 1) {
+                                                    return itemDelegate.modelData.checkState === Qt.Checked ? "\u2713" : "  ";
+                                                } else if (itemDelegate.modelData.buttonType === 2) {
+                                                    return itemDelegate.modelData.checkState === Qt.Checked ? "\u25CF" : "\u25CB";
+                                                }
+                                                return "";
+                                            }
+                                        }
+
+                                        Image {
+                                            id: entryIcon
+                                            anchors.left: parent.left
+                                            anchors.leftMargin: 8
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            visible: !checkIcon.visible && itemDelegate.modelData.icon && itemDelegate.modelData.icon !== ""
+                                            source: itemDelegate.modelData.icon || ""
+                                            sourceSize.width: 16
+                                            sourceSize.height: 16
+                                            width: 16
+                                            height: 16
+                                            fillMode: Image.PreserveAspectFit
+                                        }
+
+                                        Text {
+                                            id: textLabel
+                                            anchors.left: parent.left
+                                            anchors.leftMargin: (checkIcon.visible || entryIcon.visible) ? 30 : 10
+                                            anchors.right: shortcutLabel.visible ? shortcutLabel.left : (subArrow.visible ? subArrow.left : parent.right)
+                                            anchors.rightMargin: 6
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            text: itemDelegate.itemText
+                                            color: itemDelegate.isEnabled ? Theme.text : Theme.textDim
+                                            font.family: Theme.fontFamily
+                                            font.pixelSize: 13
+                                            font.weight: Font.Medium
+                                            elide: Text.ElideRight
+                                        }
+
+                                        Text {
+                                            id: shortcutLabel
+                                            anchors.right: subArrow.visible ? subArrow.left : parent.right
+                                            anchors.rightMargin: 8
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            visible: itemDelegate.itemShortcut !== ""
+                                            text: itemDelegate.itemShortcut
+                                            color: Theme.textFaint
+                                            font.family: Theme.fontFamily
+                                            font.pixelSize: 11
+                                        }
+
+                                        Text {
+                                            id: subArrow
+                                            anchors.right: parent.right
+                                            anchors.rightMargin: 8
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            visible: !!itemDelegate.modelData.hasChildren
+                                            font.family: Theme.fontFamily
+                                            font.pixelSize: 12
+                                            color: Theme.textDim
+                                            text: "\u203A"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     Timer {
         id: idleRecheck
         interval: 800
@@ -886,7 +1200,10 @@ Scope {
                 id: frame
                 focus: true
                 Keys.onEscapePressed: {
-                    if (clockPanel.calOpen) {
+                    if (root.activeTrayEntry !== null) {
+                        root.activeTrayEntry = null
+                        event.accepted = true
+                    } else if (clockPanel.calOpen) {
                         clockPanel.calOpen = false
                         event.accepted = true
                     }

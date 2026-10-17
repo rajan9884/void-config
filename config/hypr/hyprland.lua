@@ -16,6 +16,9 @@ hl.on("hyprland.start", function()
     -- hl.exec_cmd("dunst") replaced with quickshell
     -- Clipboard capture is owned by the quickshell clipboard plugin
     -- (wl-paste --watch clipboard.py); no external watchers here.
+    -- audio stack: bare `pipewire` — drop-ins in /etc/pipewire/pipewire.conf.d
+    -- (from install.sh) make it spawn wireplumber + pipewire-pulse itself
+    hl.exec_cmd("pipewire")
     hl.exec_cmd("dbus-update-activation-environment --system --all 2>/dev/null || true")
     hl.exec_cmd("/usr/libexec/hyprpolkitagent") -- auth dialogs (sudo / pkexec)
     hl.exec_cmd(home .. "/.config/hypr/scripts/portal-warmup.sh")

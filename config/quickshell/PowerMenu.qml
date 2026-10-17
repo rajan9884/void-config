@@ -131,11 +131,13 @@ Scope {
 
     // ---- actions ----------------------------------------------------------
     readonly property var actions: [
-        { name: "shutdown",  label: "Shut down", icon: "shutdown.png",  key: "s", danger: true,  cmd: ["systemctl", "poweroff"] },
-        { name: "reboot",    label: "Reboot",    icon: "reboot.png",    key: "r", danger: true,  cmd: ["systemctl", "reboot"] },
-        { name: "suspend",   label: "Suspend",   icon: "suspend.png",   key: "z", danger: false, cmd: ["systemctl", "suspend"] },
+        // Void (runit/elogind): no systemctl — elogind D-Bus allows power
+        // ops for the active seat (verified: busctl CanReboot/CanPowerOff/CanSuspend == yes).
+        { name: "shutdown",  label: "Shut down", icon: "shutdown.png",  key: "s", danger: true,  cmd: ["loginctl", "poweroff"] },
+        { name: "reboot",    label: "Reboot",    icon: "reboot.png",    key: "r", danger: true,  cmd: ["loginctl", "reboot"] },
+        { name: "suspend",   label: "Suspend",   icon: "suspend.png",   key: "z", danger: false, cmd: ["loginctl", "suspend"] },
         { name: "logout",    label: "Log out",   icon: "logout.png",    key: "e", danger: true,  dispatch: "hl.dsp.exit()" },
-        { name: "hibernate", label: "Hibernate", icon: "hibernate.png", key: "h", danger: false, cmd: ["systemctl", "hibernate"] }
+        { name: "hibernate", label: "Hibernate", icon: "hibernate.png", key: "h", danger: false, cmd: ["loginctl", "hibernate"] }
     ]
 
     readonly property var visibleActions: actions.filter(function (a) {

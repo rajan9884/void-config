@@ -23,7 +23,8 @@ PanelWindow {
     property real shadowBlur: 0.45
     property real shadowX: 6
     property real shadowY: 6
-    property string wallpaperPath: configs.wallpaper_path.replace("$HOME", Quickshell.env("HOME"))
+    // Fallback default so a fresh/empty config.json still finds wallpapers.
+    property string wallpaperPath: (configs.wallpaper_path || "$HOME/.local/share/wallpapers").replace("$HOME", Quickshell.env("HOME"))
     property string cachePath: configs.cache_path.replace("$HOME", Quickshell.env("HOME"))
 
     property bool showEmpty: false

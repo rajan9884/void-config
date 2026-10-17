@@ -18,8 +18,8 @@
 --   monitor scaling (was SLASH): SUPER+EQUAL up, SUPER+MINUS down —
 --     SLASH stays cheatsheet (was double-bound: scaling AND cheatsheet)
 --   togglesplit (was J): SUPER+ALT+J — SUPER+J stays focus-down
---   recorder: SUPER+R = wf-recorder region toggle (gpu-screen-recorder absent)
---   random wallpaper (was R): SUPER+ALT+R
+--   recorder (was R): SUPER+ALT+R
+--   random wallpaper (was ALT+R): SUPER+R
 --   close-window on W dropped (W = wallpaper picker) — Q still closes
 --   lock: SUPER+CTRL+L — SUPER+TAB cycles workspaces (old-arch restore)
 --   workspace-cycle: SUPER+TAB next, SUPER+SHIFT+TAB prev, SUPER+CTRL+TAB former
@@ -149,7 +149,7 @@ hl.bind(mainMod .. " + CTRL + BACKSPACE", function()
 end, { description = "Toggle single-window square aspect" })
 
 -- ── Wallpaper ──
-hl.bind(mainMod .. " + ALT + R", hl.dsp.exec_cmd(scripts .. "/random-wall.sh"), { description = "Random wallpaper" })
+hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(scripts .. "/random-wall.sh"), { description = "Random wallpaper" })
 
 -- ── Webapps ──
 hl.bind(mainMod .. " + ALT + SHIFT + W", hl.dsp.exec_cmd("qs ipc call webapps install"), { description = "Install web app" })
@@ -253,8 +253,8 @@ hl.bind("SUPER + CTRL + Print", hl.dsp.exec_cmd(bin .. "/ocr-extract"), { descri
 hl.bind("Delete", hl.dsp.exec_cmd("sh -c 'mkdir -p " .. home .. "/Pictures/Screenshots; file=" .. home .. "/Pictures/Screenshots/$(date +%Y-%m-%d_%H-%M-%S).png; grim \"$file\"; wl-copy < \"$file\"; notify-send -t 4000 \"Screenshot saved\" \"$file\"'"), { description = "Screenshot fullscreen" })
 hl.bind("SHIFT + Delete", hl.dsp.exec_cmd("sh -c 'mkdir -p " .. home .. "/Pictures/Screenshots; file=" .. home .. "/Pictures/Screenshots/$(date +%Y-%m-%d_%H-%M-%S).png; grim -g \"$(slurp)\" \"$file\"; wl-copy < \"$file\"; notify-send -t 4000 \"Screenshot saved\" \"$file\"'"), { description = "Screenshot area" })
 
--- ── Recorder (wf-recorder region toggle) ──
-hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(scripts .. "/screen-record.sh"), { description = "Screen recording" })
+-- ── Recorder (wf-recorder region toggle; moved off SUPER+R for wallpaper) ──
+hl.bind(mainMod .. " + ALT + R", hl.dsp.exec_cmd(scripts .. "/screen-record.sh"), { description = "Screen recording" })
 
 -- ── Mouse ──
 hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true, description = "Drag window" })

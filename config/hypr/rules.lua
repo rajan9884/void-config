@@ -2,14 +2,17 @@
 -- To check class name, open the app and run:
 -- hyprctl clients
 
--- Opacity rules for all windows except fullscreen
+-- Opacity rules for all windows except fullscreen.
+-- Two values = inactive + active so FOCUSED windows also follow SUPER+O
+-- (a single value only pins the unfocused state, leaving the focused
+-- window at full opacity — that read as "Thunar has fixed opacity").
 hl.window_rule({
     match = { class = ".*" },
-    opacity = "1.0 override",
+    opacity = "1.0 1.0 override",
 })
 hl.window_rule({
     match = { class = ".*", fullscreen = true },
-    opacity = "1.0 override",
+    opacity = "1.0 1.0 override",
 })
 
 --hl.window_rule({

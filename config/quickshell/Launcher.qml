@@ -81,7 +81,12 @@ Scope {
             var s = root.fuzzyScore(apps[i].name + " " + (apps[i].genericName || "") + " " + (apps[i].execString || ""), q)
             if (s >= 0) scored.push({ app: apps[i], score: s })
         }
-        scored.sort(function(a, b) { return b.score - a.score })
+        // empty query: pure alphabetical list; with a query: rank by score, tie-break A→Z
+        var byName = function(a, b) {
+            return a.app.name.toLowerCase().localeCompare(b.app.name.toLowerCase())
+        }
+        if (q.length === 0) scored.sort(byName)
+        else scored.sort(function(a, b) { return b.score - a.score || byName(a, b) })
         return scored.slice(0, 30).map(function(x) { return x.app })
     }
 

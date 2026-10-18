@@ -13,6 +13,7 @@ DESKTOP_DIR="$HOME/.local/share/applications/"
 # than a path rebuilt from the displayed name. Installs predating the name
 # validation could nest the launcher inside directories, and those are exactly
 # the ones a reconstructed path cannot reach.
+WEB_APPS=()
 WEB_APP_PATHS=()
 while IFS= read -r -d '' file; do
   if grep -q '^Exec=.*webapp-launch.*' "$file"; then
@@ -32,6 +33,12 @@ path_for_web_app() {
     fi
   done
 }
+
+if [[ ${1:-} == "--list" ]]; then
+  # Machine-readable inventory for the Quickshell webapps plugin.
+  printf '%s\n' "${WEB_APPS[@]}"
+  exit 0
+fi
 
 if (( $# == 0 )); then
   if ((${#WEB_APPS[@]})); then

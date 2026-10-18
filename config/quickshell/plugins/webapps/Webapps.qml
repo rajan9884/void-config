@@ -7,7 +7,7 @@ import Quickshell.Hyprland
 import "../.."
 
 // Web apps: install/remove .desktop launchers without a terminal.
-// Install and remove run the existing hypr/bin backends by argv (they already
+// Install and remove run the existing ~/bin backends by argv (they already
 // validate names, URLs and .desktop escaping); this file only renders.
 // IPC: qs ipc call webapps toggle|show|hide|install|remove
 Scope {

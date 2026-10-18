@@ -87,16 +87,6 @@
       "keyColor": "#c6c7c6"
     },
     {
-      "type": "theme",
-      "key": "󰔎 Theme",
-      "keyColor": "#c6c7c6"
-    },
-    {
-      "type": "icons",
-      "key": "󰀻 Icons",
-      "keyColor": "#c6c7c6"
-    },
-    {
       "type": "font",
       "key": "󰛖 Font",
       "keyColor": "#c6c7c6"
@@ -142,12 +132,7 @@
       "key": "󰍛 Memory",
       "keyColor": "#cac5cd"
     },
-    {
-      "type": "swap",
-      "key": "󰾴 Swap",
-      "keyColor": "#cac5cd"
-    },
-    {
+        {
       "type": "disk",
       "key": "󰋊 Disk",
       "keyColor": "#cac5cd"
@@ -157,10 +142,7 @@
       "format": "\u001b[1;38;2;202;197;205m╰─────────────────────────────────────────────────────╯\u001b[0m"
     },
 
-    "separator",
+    "separator"
 
-    {
-      "type": "colors"
-    }
   ]
 }

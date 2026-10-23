@@ -30,7 +30,6 @@ gnome-keyring
 gnome-themes-standard
 greetd
 grim
-grub-x86_64-efi
 gum
 gvfs-afc
 gvfs-mtp
@@ -44,8 +43,6 @@ hyprpolkitagent
 hyprsunset
 imv
 ImageMagick
-intel-ucode
-intel-video-accel
 jq
 alacritty
 foot

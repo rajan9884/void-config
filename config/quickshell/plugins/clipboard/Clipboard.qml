@@ -1,527 +1,614 @@
-pragma ComponentBehavior: Bound
-import QtQuick
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
-import Quickshell.Hyprland
-import "../.."
+import QtQuick
+import qs.Commons
+import qs.Commons as Commons
+import qs.Ui
+import "ClipboardHistory.js" as ClipboardHistory
 
-// Clipboard history: split view (list left, full preview right).
-// History helpers live inline here (no separate history script); capture /
-// paste / open run the Python backend by argv (never shell).
-// History: ~/.local/state/theme/clipboard-history.json (this file is the sole
-// writer; the backend only reads it for paste/open by index).
-// IPC: qs ipc call clipboard toggle|show|hide|wipe
-Scope {
-    id: root
-    property bool showing: false
-    property var targetScreen: Quickshell.screens[0]
-    property string query: ""
-    property int selected: 0
-    property bool cursorActive: false
-    property var entries: []
-    property bool wipeArmed: false
+Item {
+  id: root
 
-    readonly property string stateDir: (Quickshell.env("XDG_STATE_HOME") || (Quickshell.env("HOME") + "/.local/state")) + "/theme"
-    readonly property string historyPath: root.stateDir + "/clipboard-history.json"
-    readonly property string backend: Quickshell.env("HOME") + "/.config/quickshell/plugins/clipboard/clipboard.py"
-    readonly property int historyLimit: 300
-    readonly property int displayLimit: 50
-    readonly property int displayTextLimit: 8192
+  property string omarchyPath: Quickshell.env("OMARCHY_PATH")
+  property bool opened: false
+  property string filterText: ""
+  property int selectedIndex: 0
+  property bool cursorActive: false
+  property bool clearConfirmOpen: false
+  property var history: []
 
-    function openMenu() {
-        var mon = Hyprland.focusedMonitor
-        if (mon) { var scr = Quickshell.screens.find(function(s) { return s.name === mon.name }); if (scr) root.targetScreen = scr }
-        root.showing = true
-        root.query = ""
-        root.selected = 0
-        root.cursorActive = true
-        root.wipeArmed = false
-        root.rebuildDisplay()
-        pSnapshot.running = true
-        Qt.callLater(function() { keyCatcher.forceActiveFocus() })
-    }
-    function closeMenu() { root.showing = false }
-    function toggleMenu() { root.showing ? root.closeMenu() : root.openMenu() }
+  property string historyPath: Quickshell.env("HOME") + "/.local/state/omarchy/clipboard-history.json"
+  property string captureScript: root.omarchyPath + "/shell/plugins/clipboard/capture.sh"
+  // Shares the [menu] surface tokens — themes that style the menu also
+  // style the clipboard. Selected-row colors composed in the
+  // singleton so consumers drop them straight into Rectangle bindings.
+  property color background: Commons.Color.menu.background
+  property color foreground: Commons.Color.menu.text
+  property color border: Commons.Color.menu.border
+  property var borderSpec: Border.surfaceSpec("menu", "border", border, Math.max(1, Style.space(2)))
+  property color scrim: Commons.Color.menu.scrim
+  property color selectedBackground: Commons.Color.menu.selectedBackground
+  property color selectedText: Commons.Color.menu.selectedText
+  readonly property int cornerRadius: Style.cornerRadius
+  property string fontFamily: Style.font.menuFamily
+  property int contentMargin: Style.spacing.panelPadding
+  property int headerHeight: Math.max(Style.space(34), Style.font.title + Style.spacing.controlPaddingY * 2)
+  property int contentSpacing: Style.spacing.md
+  property int cardWidth: Math.min(Style.space(875), panel.width - Style.gapsOut * 2)
+  property int cardHeight: Math.min(Style.space(600), panel.height - Style.gapsOut * 2)
+  property int rowHeight: Math.max(Style.space(50), Style.font.body + Style.font.caption + Style.spacing.rowPaddingX * 2)
+  property int historyLimit: 500
 
-    IpcHandler {
-        target: "clipboard"
-        function toggle(): void { root.toggleMenu() }
-        function show(): void { root.openMenu() }
-        function hide(): void { root.closeMenu() }
-        function wipe(): void { root.wipeAll() }
+  function open(payloadJson) {
+    root.opened = true
+    root.filterText = ""
+    root.selectedIndex = 0
+    root.cursorActive = true
+    root.disarmPointer()
+    root.rebuildDisplay()
+    Qt.callLater(function() { keyCatcher.forceActiveFocus() })
+  }
+
+  function close() {
+    root.cancelClearHistory()
+    root.opened = false
+  }
+
+  function toggle() {
+    if (root.opened) root.close()
+    else root.open("{}")
+  }
+
+  function normalizeEntry(value) {
+    return ClipboardHistory.normalizeEntry(value)
+  }
+
+  function entryKey(entry) {
+    return ClipboardHistory.entryKey(entry)
+  }
+
+  function loadHistory(raw) {
+    root.history = ClipboardHistory.parseHistory(raw)
+    if (root.opened) root.rebuildDisplay()
+  }
+
+  function saveHistory() {
+    historyFile.setText(JSON.stringify(root.history.slice(0, root.historyLimit), null, 2) + "\n")
+  }
+
+  function addClipboardEntry(entry) {
+    var normalized = ClipboardHistory.normalizeEntry(entry)
+    if (!normalized) return
+
+    root.history = ClipboardHistory.addEntry(root.history, normalized, root.historyLimit)
+    root.saveHistory()
+    if (root.opened) root.rebuildDisplay()
+  }
+
+  function addClipboardJson(line) {
+    root.addClipboardEntry(ClipboardHistory.parseEntryJson(line))
+  }
+
+  function requestClearHistory() {
+    if (root.history.length === 0) return
+    clearConfirm.selectedIndex = 1
+    root.clearConfirmOpen = true
+  }
+
+  function cancelClearHistory() {
+    root.clearConfirmOpen = false
+    root.disarmPointer()
+    Qt.callLater(function() { keyCatcher.forceActiveFocus() })
+  }
+
+  function confirmClearHistory() {
+    root.history = ClipboardHistory.clearHistory()
+    root.saveHistory()
+    root.selectedIndex = 0
+    root.cursorActive = false
+    root.disarmPointer()
+    root.clearConfirmOpen = false
+    root.rebuildDisplay()
+    Qt.callLater(function() { keyCatcher.forceActiveFocus() })
+  }
+
+  function removeDisplayIndex(index) {
+    if (index < 0 || index >= displayModel.count) return
+
+    var row = displayModel.get(index)
+    root.history = ClipboardHistory.removeEntryAt(root.history, row.historyIndex)
+    root.saveHistory()
+
+    if (displayModel.count <= 1) {
+      root.selectedIndex = 0
+      root.cursorActive = false
+    } else if (root.selectedIndex >= displayModel.count - 1) {
+      root.selectedIndex = displayModel.count - 2
     }
 
-    // ---------- history store (sole writer) ----------
-    FileView {
-        id: historyFile
-        path: root.historyPath
-        watchChanges: true
-        printErrors: false
-        onLoaded: root.loadHistory(text())
-        onLoadFailed: root.loadHistory("[]")
-        onFileChanged: reload()
+    root.disarmPointer()
+    root.rebuildDisplay()
+  }
+
+  function rebuildDisplay() {
+    var rows = ClipboardHistory.displayRows(root.history, root.filterText, 50, Commons.I18n.t, Commons.I18n.tn, Commons.I18n.formatNumber)
+
+    displayModel.clear()
+    for (var i = 0; i < rows.length; i++) {
+      var row = rows[i]
+      displayModel.append({
+        entryType: row.entryType,
+        fullText: row.fullText,
+        previewText: row.previewText,
+        previewImage: row.previewImage ? Util.fileUrl(row.previewImage) : "",
+        path: row.path,
+        mime: row.mime,
+        historyIndex: row.index
+      })
     }
-    function loadHistory(raw) {
-        var out = []
-        try {
-            var parsed = JSON.parse(raw || "[]")
-            if (Array.isArray(parsed)) for (var i = 0; i < parsed.length; i++) {
-                var e = root.normalizeEntry(parsed[i])
-                if (e) out.push(e)
-            }
-        } catch (e) {}
-        root.entries = out
-        if (root.showing) root.rebuildDisplay()
+
+    if (displayModel.count === 0) selectedIndex = 0
+    else if (selectedIndex >= displayModel.count) selectedIndex = displayModel.count - 1
+    else if (selectedIndex < 0) selectedIndex = 0
+
+    Qt.callLater(function() {
+      if (displayModel.count > 0) resultList.positionViewAtIndex(root.selectedIndex, ListView.Contain)
+    })
+  }
+
+  // Preview text is composed imperatively, so rebuild it when the
+  // language (and with it the string catalog) changes under an open panel.
+  Connections {
+    target: Commons.I18n
+    function onStringsChanged() { if (root.opened) root.rebuildDisplay() }
+  }
+
+  function select(delta) {
+    if (displayModel.count === 0) return
+    root.disarmPointer()
+    if (!cursorActive) {
+      cursorActive = true
+      selectedIndex = delta < 0 ? displayModel.count - 1 : 0
+    } else {
+      selectedIndex = (selectedIndex + delta + displayModel.count) % displayModel.count
     }
-    function saveHistory() {
-        historyFile.setText(JSON.stringify(root.entries.slice(0, root.historyLimit), null, 2) + "\n")
+    resultList.positionViewAtIndex(selectedIndex, ListView.Contain)
+  }
+
+  function selectAbsolute(index) {
+    if (displayModel.count === 0) return
+    root.disarmPointer()
+    root.cursorActive = true
+    root.selectedIndex = Math.max(0, Math.min(index, displayModel.count - 1))
+    resultList.positionViewAtIndex(root.selectedIndex, ListView.Contain)
+  }
+
+  function setFilter(nextFilter) {
+    root.filterText = nextFilter
+    root.selectedIndex = 0
+    root.cursorActive = true
+    root.disarmPointer()
+    root.rebuildDisplay()
+  }
+
+  function disarmPointer() {
+    pointerGate.reset()
+  }
+
+  function selectFromPointer(index, item, mouse) {
+    if (!pointerGate.moved(item, mouse)) return
+    root.cursorActive = true
+    root.selectedIndex = index
+  }
+
+  function activateIndex(index) {
+    if (index < 0 || index >= displayModel.count) return
+    var row = displayModel.get(index)
+    root.applySelected(row)
+  }
+
+  function copyIndex(index) {
+    if (index < 0 || index >= displayModel.count) return
+    var row = displayModel.get(index)
+    root.copySelected(row)
+  }
+
+  function openIndex(index) {
+    if (index < 0 || index >= displayModel.count) return
+    var row = displayModel.get(index)
+    root.openSelected(row)
+  }
+
+  function applySelected(row) {
+    if (!row) return
+    root.opened = false
+    if (row.entryType === "image") {
+      Quickshell.execDetached([root.omarchyPath + "/bin/omarchy-clipboard-paste-file", row.mime, row.path])
+    } else if (row.fullText) {
+      Quickshell.execDetached([root.omarchyPath + "/bin/omarchy-clipboard-paste-text", "--shift-insert", "--history-index", String(row.historyIndex)])
     }
-    function addEntry(raw) {
-        var line = (raw || "").trim()
-        if (!line) return
-        var parsed = null
-        try { parsed = JSON.parse(line) } catch (e) { return }
-        var entry = root.normalizeEntry(parsed)
-        if (!entry) return
-        var key = root.entryKey(entry)
-        var next = [entry]
-        for (var i = 0; i < root.entries.length && next.length < root.historyLimit; i++) {
-            var existing = root.normalizeEntry(root.entries[i])
-            if (!existing || root.entryKey(existing) === key) continue
-            next.push(existing)
+  }
+
+  function copySelected(row) {
+    if (!row) return
+    root.opened = false
+    if (row.entryType === "image") {
+      Quickshell.execDetached([root.omarchyPath + "/bin/omarchy-clipboard-paste-file", "--copy-only", row.mime, row.path])
+    } else if (row.fullText) {
+      Quickshell.execDetached([root.omarchyPath + "/bin/omarchy-clipboard-paste-text", "--copy-only", "--history-index", String(row.historyIndex)])
+    }
+  }
+
+  function openSelected(row) {
+    if (!row) return
+    root.opened = false
+    Quickshell.execDetached([root.omarchyPath + "/bin/omarchy-clipboard-open", "--history-index", String(row.historyIndex)])
+  }
+
+  Component.onCompleted: initProc.running = true
+
+  ListModel { id: displayModel }
+
+  PointerMoveGate {
+    id: pointerGate
+    referenceItem: card
+  }
+
+  FileView {
+    id: historyFile
+    path: root.historyPath
+    watchChanges: true
+    atomicWrites: true
+    printErrors: false
+    onLoaded: root.loadHistory(text())
+    onLoadFailed: root.loadHistory("[]")
+    onFileChanged: reload()
+  }
+
+  // Reap watchers left behind by a previous shell instance, then start our
+  // own. The pdeathsig on the watchers makes the kernel kill them whenever
+  // the shell exits, however it exits, so no further lifecycle management.
+  Process {
+    id: initProc
+    command: ["pkill", "-f", "wl-paste .*--watch .*/shell/plugins/clipboard/capture\\.sh"]
+    onExited: {
+      currentProc.running = true
+      textWatchProc.running = true
+      imageWatchProc.running = true
+    }
+  }
+
+  Process {
+    id: currentProc
+    command: [root.captureScript]
+    stdout: StdioCollector {
+      waitForEnd: true
+      onStreamFinished: root.addClipboardJson(text)
+    }
+  }
+
+  Process {
+    id: textWatchProc
+    command: ["setpriv", "--pdeathsig", "TERM", "wl-paste", "--type", "text", "--watch", root.captureScript, "text"]
+    onExited: watchRestartTimer.restart()
+    stdout: SplitParser {
+      onRead: function(data) { root.addClipboardJson(data) }
+    }
+  }
+
+  Process {
+    id: imageWatchProc
+    command: ["setpriv", "--pdeathsig", "TERM", "wl-paste", "--type", "image/png", "--watch", root.captureScript, "image/png"]
+    onExited: watchRestartTimer.restart()
+    stdout: SplitParser {
+      onRead: function(data) { root.addClipboardJson(data) }
+    }
+  }
+
+  // A watcher that dies takes clipboard history with it, silently: copying still
+  // works, the picker still opens, and the old entries are all still there, so
+  // nothing recorded until the next shell reload. Bring it back instead.
+  Timer {
+    id: watchRestartTimer
+    interval: 1000
+    repeat: false
+    onTriggered: {
+      if (!textWatchProc.running) textWatchProc.running = true
+      if (!imageWatchProc.running) imageWatchProc.running = true
+    }
+  }
+
+  OverlayWindow {
+    id: panel
+    shown: root.opened
+    WlrLayershell.namespace: "omarchy-clipboard"
+
+    Rectangle {
+      anchors.fill: parent
+      color: root.scrim
+    }
+
+    MouseArea {
+      anchors.fill: parent
+      onClicked: root.close()
+    }
+
+    BorderSurface {
+      id: card
+      width: root.cardWidth
+      height: root.cardHeight
+      radius: root.cornerRadius
+      anchors.centerIn: parent
+      color: root.background
+      borderSpec: root.borderSpec
+      padding: root.contentMargin
+
+      MouseArea { anchors.fill: parent; onClicked: {} }
+
+      Item {
+        id: keyCatcher
+        anchors.fill: parent
+        z: root.clearConfirmOpen ? 20 : 0
+        focus: true
+
+        Keys.priority: Keys.BeforeItem
+        Keys.onPressed: function(event) {
+          if (root.clearConfirmOpen) {
+            if (clearConfirm.handleKey(event)) event.accepted = true
+            return
+          }
+
+          if (event.key === Qt.Key_Escape) {
+            if (root.filterText) root.setFilter("")
+            else root.close()
+            event.accepted = true
+          } else if (Util.editsFilter(event, root.filterText)) {
+            root.setFilter(Util.editedFilter(event, root.filterText))
+            event.accepted = true
+          } else if (event.key === Qt.Key_Delete) {
+            if (event.modifiers & Qt.ShiftModifier) root.requestClearHistory()
+            else root.removeDisplayIndex(root.selectedIndex)
+            event.accepted = true
+          } else if (event.key === Qt.Key_Up) {
+            root.select(-1)
+            event.accepted = true
+          } else if (event.key === Qt.Key_Down) {
+            root.select(1)
+            event.accepted = true
+          } else if (event.key === Qt.Key_PageUp) {
+            root.select(-6)
+            event.accepted = true
+          } else if (event.key === Qt.Key_PageDown) {
+            root.select(6)
+            event.accepted = true
+          } else if (event.key === Qt.Key_Home) {
+            root.selectAbsolute(0)
+            event.accepted = true
+          } else if (event.key === Qt.Key_End) {
+            root.selectAbsolute(displayModel.count - 1)
+            event.accepted = true
+          } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+            if (root.cursorActive && (event.modifiers & Qt.AltModifier)) root.openIndex(root.selectedIndex)
+            else if (root.cursorActive && (event.modifiers & Qt.ShiftModifier)) root.copyIndex(root.selectedIndex)
+            else if (root.cursorActive) root.activateIndex(root.selectedIndex)
+            else if (displayModel.count > 0) root.cursorActive = true
+            event.accepted = true
+          } else if (event.text && event.text.length === 1 && event.text.charCodeAt(0) >= 32 && event.text.charCodeAt(0) !== 127) {
+            root.setFilter(root.filterText + event.text)
+            event.accepted = true
+          }
         }
-        root.entries = next
-        root.saveHistory()
-        if (root.showing) root.rebuildDisplay()
-    }
 
-    // ---------- pure entry helpers (no I/O) ----------
-    function normalizeEntry(v) {
-        if (!v || typeof v !== "object") return null
-        if (v.type === "text" && typeof v.text === "string" && v.text.trim().length > 0) return { type: "text", text: v.text }
-        if (v.type === "image" && typeof v.path === "string" && v.path) return { type: "image", path: v.path, mime: v.mime || "image/png", capturedAt: v.capturedAt || "" }
-        return null
-    }
-    function entryKey(e) { return e.type === "image" ? "image:" + e.path : "text:" + e.text }
-    function decodeFileUri(uri) {
-        var value = String(uri || "").trim()
-        if (value.indexOf("file://") !== 0) return ""
-        var path = value.substring(7)
-        if (path.indexOf("localhost/") === 0) path = path.substring(9)
-        if (path.charAt(0) !== "/") return ""
-        try { return decodeURIComponent(path) } catch (e) { return path }
-    }
-    function filePaths(entry) {
-        if (!entry || entry.type !== "text") return []
-        var lines = String(entry.text || "").split(/\r?\n/)
-        var paths = []
-        for (var i = 0; i < lines.length; i++) {
-            var p = root.decodeFileUri(lines[i])
-            if (p) paths.push(p)
+        ConfirmDialog {
+          id: clearConfirm
+
+          anchors.fill: parent
+          opened: root.clearConfirmOpen
+          z: 10
+          message: Commons.I18n.t("clipboard.deleteHistory")
+          confirmText: Commons.I18n.t("common.delete")
+          background: root.background
+          foreground: root.foreground
+          scrim: root.scrim
+          selectedBackground: root.selectedBackground
+          selectedText: root.selectedText
+          fontFamily: root.fontFamily
+          cornerRadius: root.cornerRadius
+          onCanceled: root.cancelClearHistory()
+          onConfirmed: root.confirmClearHistory()
         }
-        return paths
-    }
-    function fileName(path) { var parts = String(path || "").split("/"); return parts.length > 0 ? parts[parts.length - 1] : String(path || "") }
-    function isImagePath(path) { return /\.(png|jpe?g|webp|gif|bmp|tiff?)$/i.test(String(path || "")) }
-    function fileEntryText(entry) {
-        var paths = root.filePaths(entry)
-        if (paths.length === 0) return ""
-        if (paths.length === 1) return root.fileName(paths[0])
-        return paths.length + " files"
-    }
-    function imagePreviewText(entry) {
-        var timestamp = String((entry && entry.capturedAt) || "")
-        if (!timestamp) return "Image"
-        var label = String((entry && entry.mime) || "") === "image/png" ? "Screenshot" : "Image"
-        return label + " from " + timestamp
-    }
-    function previewText(entry) {
-        if (!entry) return ""
-        if (entry.type === "image") return root.imagePreviewText(entry)
-        var fileText = root.fileEntryText(entry)
-        if (fileText) return fileText
-        return String(entry.text || "").replace(/\s+/g, " ")
-    }
-    function fullText(entry) {
-        if (!entry) return ""
-        var paths = root.filePaths(entry)
-        if (paths.length > 0) return paths.join("\n")
-        return String(entry.text || "")
-    }
-    function searchableText(entry) {
-        if (!entry) return ""
-        if (entry.type === "image") return "image screenshot " + String(entry.mime || "") + " " + String(entry.capturedAt || "")
-        return String(entry.text || "") + " " + root.fileEntryText(entry)
-    }
-    function cappedEntry(entry) {
-        if (!entry || entry.type !== "text" || entry.text.length <= root.displayTextLimit) return entry
-        var cut = entry.text.lastIndexOf("\n", root.displayTextLimit)
-        return { type: "text", text: entry.text.slice(0, cut > 0 ? cut : root.displayTextLimit) }
-    }
-    function fileUrl(path) {
-        return "file://" + String(path || "").split("/").map(function(seg) { return encodeURIComponent(seg) }).join("/")
-    }
+      }
 
-    // ---------- display model ----------
-    ListModel { id: displayModel }
-    function activeRow() {
-        if (displayModel.count === 0 || root.selected < 0 || root.selected >= displayModel.count) return null
-        return displayModel.get(root.selected)
-    }
-    function rebuildDisplay() {
-        var needle = root.query.trim().toLowerCase()
-        displayModel.clear()
-        for (var i = 0; i < root.entries.length && displayModel.count < root.displayLimit; i++) {
-            var entry = root.cappedEntry(root.normalizeEntry(root.entries[i]))
-            if (!entry) continue
-            if (needle && root.searchableText(entry).toLowerCase().indexOf(needle) < 0) continue
-            var paths = root.filePaths(entry)
-            var isFile = paths.length > 0
-            var isImage = entry.type === "image"
-            var previewPath = isImage ? String(entry.path || "") : (isFile && paths.length === 1 && root.isImagePath(paths[0]) ? paths[0] : "")
-            displayModel.append({
-                entryType: isFile ? "file" : entry.type,
-                fullText: isImage ? "" : root.fullText(entry),
-                previewText: root.previewText(entry),
-                previewImage: previewPath ? root.fileUrl(previewPath) : "",
-                path: isImage ? String(entry.path || "") : (isFile && paths.length === 1 ? paths[0] : ""),
-                mime: isImage ? String(entry.mime || "image/png") : "text/plain",
-                historyIndex: i
-            })
-        }
-        if (displayModel.count === 0) root.selected = 0
-        else if (root.selected >= displayModel.count) root.selected = displayModel.count - 1
-        else if (root.selected < 0) root.selected = 0
-        Qt.callLater(function() { if (displayModel.count > 0) resultList.positionViewAtIndex(root.selected, ListView.Contain) })
-    }
-    function select(delta) {
-        if (displayModel.count === 0) return
-        if (!root.cursorActive) {
-            root.cursorActive = true
-            root.selected = delta < 0 ? displayModel.count - 1 : 0
-        } else {
-            root.selected = (root.selected + delta + displayModel.count) % displayModel.count
-        }
-        resultList.positionViewAtIndex(root.selected, ListView.Contain)
-    }
-    function selectAbsolute(index) {
-        if (displayModel.count === 0) return
-        root.cursorActive = true
-        root.selected = Math.max(0, Math.min(index, displayModel.count - 1))
-        resultList.positionViewAtIndex(root.selected, ListView.Contain)
-    }
-    function setFilter(next) {
-        root.query = next
-        root.selected = 0
-        root.cursorActive = true
-        root.rebuildDisplay()
-    }
-    function removeDisplayIndex(index) {
-        if (index < 0 || index >= displayModel.count) return
-        var row = displayModel.get(index)
-        var next = root.entries.slice()
-        next.splice(row.historyIndex, 1)
-        root.entries = next
-        root.saveHistory()
-        if (displayModel.count <= 1) { root.selected = 0; root.cursorActive = false }
-        else if (root.selected >= displayModel.count - 1) root.selected = displayModel.count - 2
-        root.rebuildDisplay()
-    }
-    function wipeAll() {
-        root.entries = []
-        root.saveHistory()
-        root.selected = 0
-        root.cursorActive = false
-        root.wipeArmed = false
-        root.rebuildDisplay()
-    }
+      Column {
+        anchors.fill: parent
+        anchors.topMargin: card.contentTopInset
+        anchors.rightMargin: card.contentRightInset
+        anchors.bottomMargin: card.contentBottomInset
+        anchors.leftMargin: card.contentLeftInset
+        spacing: root.contentSpacing
 
-    // ---------- actions (all argv, never shell) ----------
-    Process { id: pOp }
-    function activateIndex(index) {
-        if (index < 0 || index >= displayModel.count) return
-        var row = displayModel.get(index)
-        pOp.command = [root.backend, "paste", "--index", String(row.historyIndex)]
-        pOp.running = true
-        root.closeMenu()
-    }
-    function copyIndex(index) {
-        if (index < 0 || index >= displayModel.count) return
-        var row = displayModel.get(index)
-        pOp.command = [root.backend, "paste", "--index", String(row.historyIndex), "--copy-only"]
-        pOp.running = true
-        root.closeMenu()
-    }
-    function openIndex(index) {
-        if (index < 0 || index >= displayModel.count) return
-        var row = displayModel.get(index)
-        pOp.command = [root.backend, "open", "--index", String(row.historyIndex)]
-        pOp.running = true
-        root.closeMenu()
-    }
-
-    // ---------- capture watchers (owned here) ----------
-    Component.onCompleted: { dirProc.running = true; initProc.running = true }
-    Process {
-        id: dirProc
-        command: ["mkdir", "-p", root.stateDir]
-        onExited: historyFile.reload()
-    }
-    Process {
-        id: initProc
-        command: ["pkill", "-f", "wl-paste .*--watch .*plugins/clipboard/clipboard\\.py"]
-        onExited: { textWatch.running = true; imageWatch.running = true }
-    }
-    Process {
-        id: pSnapshot
-        command: [root.backend, "capture"]
-        stdout: StdioCollector { onStreamFinished: root.addEntry(text) }
-    }
-    Process {
-        id: textWatch
-        command: ["setpriv", "--pdeathsig", "TERM", "wl-paste", "--type", "text", "--watch", root.backend + " capture text"]
-        onExited: watchRestart.restart()
-        stdout: SplitParser { onRead: function(data) { root.addEntry(data) } }
-    }
-    Process {
-        id: imageWatch
-        command: ["setpriv", "--pdeathsig", "TERM", "wl-paste", "--type", "image/png", "--watch", root.backend + " capture image/png"]
-        onExited: watchRestart.restart()
-        stdout: SplitParser { onRead: function(data) { root.addEntry(data) } }
-    }
-    Timer {
-        id: watchRestart
-        interval: 1000
-        onTriggered: { if (!textWatch.running) textWatch.running = true; if (!imageWatch.running) imageWatch.running = true }
-    }
-    Timer { id: wipeTimer; interval: 3000; onTriggered: root.wipeArmed = false }
-
-    PanelWindow {
-        id: panel
-        visible: root.showing
-        screen: root.targetScreen
-        anchors { top: true; bottom: true; left: true; right: true }
-        color: "transparent"
-        exclusionMode: ExclusionMode.Ignore
-        WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.namespace: "clipboard"
-        WlrLayershell.keyboardFocus: root.showing ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
-        mask: Region { item: root.showing ? card : null }
-        MouseArea { anchors.fill: parent; onClicked: root.closeMenu() }
         Rectangle {
-            id: card
-            width: Math.min(900, parent.width - 80)
-            height: Math.min(560, parent.height - 80)
-            anchors.centerIn: parent
-            radius: Theme.radius
-            color: Theme.bg
-            border.width: 1
-            border.color: Theme.accent
-            MouseArea { anchors.fill: parent; onClicked: {} }
-            // Dedicated focus catcher: a TextInput here
-            // fights the list for Up/Down/Enter/Delete, so the filter is typed
-            // through Keys.onPressed and rendered as plain text instead.
-            Item {
-                id: keyCatcher
-                anchors.fill: parent
-                focus: true
-                Keys.priority: Keys.BeforeItem
-                Keys.onPressed: function(event) {
-                    if (event.key === Qt.Key_Escape) {
-                        if (root.query !== "") root.setFilter("")
-                        else root.closeMenu()
-                        event.accepted = true
-                    } else if (event.key === Qt.Key_Delete) {
-                        if (event.modifiers & Qt.ShiftModifier) { if (root.wipeArmed) root.wipeAll(); else { root.wipeArmed = true; wipeTimer.restart() } }
-                        else root.removeDisplayIndex(root.selected)
-                        event.accepted = true
-                    } else if (event.key === Qt.Key_Backspace) {
-                        if (event.modifiers & Qt.ControlModifier) root.setFilter("")
-                        else root.setFilter(root.query.slice(0, -1))
-                        event.accepted = true
-                    } else if (event.key === Qt.Key_Up) { root.select(-1); event.accepted = true }
-                    else if (event.key === Qt.Key_Down) { root.select(1); event.accepted = true }
-                    else if (event.key === Qt.Key_PageUp) { root.select(-6); event.accepted = true }
-                    else if (event.key === Qt.Key_PageDown) { root.select(6); event.accepted = true }
-                    else if (event.key === Qt.Key_Home) { root.selectAbsolute(0); event.accepted = true }
-                    else if (event.key === Qt.Key_End) { root.selectAbsolute(displayModel.count - 1); event.accepted = true }
-                    else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                        if (root.cursorActive && (event.modifiers & Qt.AltModifier)) root.openIndex(root.selected)
-                        else if (root.cursorActive && (event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier))) root.copyIndex(root.selected)
-                        else if (root.cursorActive) root.activateIndex(root.selected)
-                        else if (displayModel.count > 0) root.cursorActive = true
-                        event.accepted = true
-                    } else if (event.text && event.text.length === 1 && event.text.charCodeAt(0) >= 32 && event.text.charCodeAt(0) !== 127) {
-                        root.setFilter(root.query + event.text)
-                        event.accepted = true
-                    }
-                }
-            }
-            Column {
-                anchors.fill: parent
-                anchors.margins: 16
-                spacing: 10
-                Row {
-                    width: parent.width
-                    spacing: 10
-                    Text { text: "CLIPBOARD"; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 14; font.bold: true; font.letterSpacing: 3 }
-                    Rectangle {
-                        width: countLabel.width + 14; height: 18; radius: 9
-                        anchors.verticalCenter: parent.verticalCenter
-                        color: Theme.alpha(Theme.accent, 0.12)
-                        Text { id: countLabel; anchors.centerIn: parent; text: root.entries.length + ""; color: Theme.textDim; font.family: Theme.fontFamily; font.pixelSize: 10 }
-                    }
-                    Item { width: parent.width - 220; height: 1 }
-                    Text {
-                        text: root.wipeArmed ? "SURE?" : "WIPE ALL"
-                        color: Theme.danger
-                        font.family: Theme.fontFamily
-                        font.pixelSize: 10
-                        font.bold: root.wipeArmed
-                        anchors.verticalCenter: parent.verticalCenter
-                        MouseArea {
-                            anchors.fill: parent; cursorShape: Qt.PointingHandCursor
-                            onClicked: { if (root.wipeArmed) root.wipeAll(); else { root.wipeArmed = true; wipeTimer.restart() } }
-                        }
-                    }
-                }
-                Rectangle { width: parent.width; height: 1; color: Theme.border }
-                Text {
-                    width: parent.width
-                    text: root.query || "Search clipboard…"
-                    color: Theme.text
-                    opacity: root.query ? 1 : 0.58
-                    font.family: Theme.fontFamily
-                    font.pixelSize: 14
-                    elide: Text.ElideRight
-                }
-                Item {
-                    width: parent.width
-                    height: parent.height - 150
-                    Row {
-                        anchors.fill: parent
-                        spacing: 0
-                        Item {
-                            width: parent.width / 2
-                            height: parent.height
-                            clip: true
-                            ListView {
-                                id: resultList
-                                anchors.fill: parent
-                                anchors.rightMargin: 12
-                                clip: true
-                                model: displayModel
-                                spacing: 4
-                                boundsBehavior: Flickable.StopAtBounds
-                                delegate: Rectangle {
-                                    id: row
-                                    required property int index
-                                    required property string entryType
-                                    required property string previewText
-                                    required property string fullText
-                                    required property string previewImage
-                                    readonly property bool hasCursor: root.cursorActive && index === root.selected
-                                    width: ListView.view.width
-                                    height: 50
-                                    radius: 6
-                                    color: hasCursor ? Theme.alpha(Theme.accent, 0.12) : "transparent"
-                                    border.width: 1
-                                    border.color: hasCursor ? Theme.accent : "transparent"
-                                    Row {
-                                        anchors.fill: parent
-                                        anchors.leftMargin: 10
-                                        anchors.rightMargin: 10
-                                        anchors.topMargin: 5
-                                        anchors.bottomMargin: 5
-                                        spacing: 8
-                                        Image {
-                                            visible: row.previewImage.length > 0
-                                            width: visible ? parent.height : 0
-                                            height: parent.height
-                                            source: row.previewImage
-                                            fillMode: Image.PreserveAspectFit
-                                            asynchronous: true
-                                            smooth: true
-                                        }
-                                        Text {
-                                            width: parent.width - (row.previewImage.length > 0 ? parent.height + parent.spacing : 0)
-                                            height: parent.height
-                                            verticalAlignment: Text.AlignVCenter
-                                            text: row.previewText
-                                            color: row.hasCursor ? Theme.text : Theme.textDim
-                                            font.family: Theme.fontFamily
-                                            font.pixelSize: 12
-                                            opacity: row.entryType === "image" || row.entryType === "file" ? 0.72 : 1.0
-                                            elide: Text.ElideRight
-                                            wrapMode: Text.NoWrap
-                                        }
-                                    }
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        onPositionChanged: { root.cursorActive = true; root.selected = row.index }
-                                        onClicked: { root.cursorActive = true; root.selected = row.index; root.activateIndex(row.index) }
-                                    }
-                                }
-                            }
-                        }
-                        Item {
-                            width: parent.width / 2
-                            height: parent.height
-                            clip: true
-                            property var active: displayModel.count > 0 && root.selected >= 0 && root.selected < displayModel.count ? displayModel.get(root.selected) : null
-                            // Divider between list and preview: a thin border
-                            // line; borderAccent keeps it visible on dark themes.
-                            Rectangle {
-                                anchors.left: parent.left
-                                anchors.top: parent.top
-                                anchors.bottom: parent.bottom
-                                width: 1
-                                color: Theme.borderAccent
-                            }
-                            Text {
-                                visible: parent.active && !parent.active.previewImage
-                                anchors.fill: parent
-                                anchors.leftMargin: 12
-                                text: parent.active ? parent.active.fullText : ""
-                                color: Theme.text
-                                font.family: Theme.fontFamily
-                                font.pixelSize: 12
-                                wrapMode: Text.WrapAnywhere
-                                elide: Text.ElideRight
-                                verticalAlignment: Text.AlignTop
-                            }
-                            Image {
-                                visible: parent.active && parent.active.previewImage
-                                anchors.fill: parent
-                                anchors.leftMargin: 12
-                                source: parent.active ? parent.active.previewImage : ""
-                                fillMode: Image.PreserveAspectFit
-                                verticalAlignment: Image.AlignTop
-                                asynchronous: true
-                                smooth: true
-                            }
-                        }
-                    }
-                    Column {
-                        anchors.centerIn: parent
-                        spacing: 8
-                        visible: displayModel.count === 0
-                        Text {
-                            text: root.entries.length === 0 ? "Clipboard is empty" : "No matches for “" + root.query + "”"
-                            color: Theme.text
-                            opacity: 0.7
-                            font.family: Theme.fontFamily
-                            font.pixelSize: 12
-                            horizontalAlignment: Text.AlignHCenter
-                            width: parent.width
-                        }
-                    }
-                }
-                Text { width: parent.width; text: "enter paste · shift+enter copy · alt+enter open · del remove · shift+del wipe · esc close"; color: Theme.textFaint; font.family: Theme.fontFamily; font.pixelSize: 10 }
-            }
+          width: parent.width
+          height: root.headerHeight
+          radius: root.cornerRadius
+          color: "transparent"
+
+          Text {
+            textFormat: Text.PlainText
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            text: root.filterText || Commons.I18n.t("clipboard.search")
+            color: root.foreground
+            opacity: root.filterText ? 1 : 0.58
+            font.family: root.fontFamily
+            font.pixelSize: Style.font.heading
+            elide: Text.ElideRight
+          }
         }
+
+        Item {
+          width: parent.width
+          height: parent.height - root.headerHeight - root.contentSpacing
+
+          Row {
+            anchors.fill: parent
+            spacing: 0
+
+            Item {
+              width: parent.width / 2
+              height: parent.height
+              clip: true
+
+              ListView {
+                id: resultList
+                anchors.fill: parent
+                anchors.rightMargin: root.contentMargin
+                model: displayModel
+                clip: true
+                spacing: Style.space(4)
+                boundsBehavior: Flickable.StopAtBounds
+
+                delegate: Rectangle {
+                  id: row
+                  required property int index
+                  required property string entryType
+                  required property string previewText
+                  required property string fullText
+                  required property string previewImage
+
+                  readonly property bool hasCursor: root.cursorActive && index === root.selectedIndex
+
+                  width: ListView.view.width
+                  height: root.rowHeight
+                  radius: root.cornerRadius
+                  color: hasCursor ? root.selectedBackground : "transparent"
+
+                  Row {
+                    anchors.fill: parent
+                    anchors.leftMargin: Style.space(12)
+                    anchors.rightMargin: Style.space(12)
+                    anchors.topMargin: Style.space(8)
+                    anchors.bottomMargin: Style.space(8)
+                    spacing: Style.space(10)
+
+                    SizedImage {
+                      visible: parent.parent.previewImage.length > 0
+                      width: visible ? parent.height : 0
+                      height: parent.height
+                      url: parent.parent.previewImage
+                      asynchronous: true
+                      smooth: true
+                    }
+
+                    Text {
+                      textFormat: Text.PlainText
+                      width: parent.width - (parent.parent.previewImage.length > 0 ? parent.height + parent.spacing : 0)
+                      height: parent.height
+                      text: parent.parent.previewText
+                      color: parent.parent.hasCursor ? root.selectedText : root.foreground
+                      font.family: root.fontFamily
+                      font.pixelSize: Style.font.title
+                      opacity: parent.parent.entryType === "image" || parent.parent.entryType === "file" ? 0.72 : 1.0
+                      elide: Text.ElideRight
+                      wrapMode: Text.NoWrap
+                      verticalAlignment: Text.AlignVCenter
+                    }
+                  }
+
+                  MouseArea {
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onPositionChanged: function(mouse) {
+                      root.selectFromPointer(row.index, row, mouse)
+                    }
+                    onClicked: {
+                      root.cursorActive = true
+                      root.selectedIndex = row.index
+                      root.activateIndex(row.index)
+                    }
+                  }
+                }
+              }
+            }
+
+            Item {
+              width: parent.width / 2
+              height: parent.height
+              clip: true
+
+              property var activeRow: displayModel.count > 0 && root.selectedIndex >= 0 && root.selectedIndex < displayModel.count ? displayModel.get(root.selectedIndex) : null
+
+              Rectangle {
+                anchors.left: parent.left
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                width: Style.normalBorderWidth
+                color: Util.alpha(root.border, 0.28)
+              }
+
+              Text {
+                textFormat: Text.PlainText
+                visible: parent.activeRow && !parent.activeRow.previewImage
+                anchors.fill: parent
+                anchors.leftMargin: root.contentMargin
+                anchors.rightMargin: 0
+                anchors.topMargin: 0
+                anchors.bottomMargin: 0
+                text: parent.activeRow ? parent.activeRow.fullText : ""
+                color: root.foreground
+                font.family: root.fontFamily
+                font.pixelSize: Style.font.title
+                wrapMode: Text.WrapAnywhere
+                elide: Text.ElideRight
+                verticalAlignment: Text.AlignTop
+              }
+
+              SizedImage {
+                visible: parent.activeRow && parent.activeRow.previewImage
+                anchors.fill: parent
+                anchors.leftMargin: root.contentMargin
+                anchors.rightMargin: 0
+                anchors.topMargin: 0
+                anchors.bottomMargin: 0
+                url: parent.activeRow ? parent.activeRow.previewImage : ""
+                verticalAlignment: Image.AlignTop
+                asynchronous: true
+                smooth: true
+              }
+            }
+          }
+
+          Column {
+            anchors.centerIn: parent
+            spacing: Style.space(8)
+            visible: displayModel.count === 0
+
+            Text {
+              text: "󰅌"
+              color: root.selectedText
+              opacity: 0.8
+              font.family: root.fontFamily
+              font.pixelSize: Style.font.displayLarge
+              horizontalAlignment: Text.AlignHCenter
+              width: parent.width
+            }
+
+            Text {
+              textFormat: Text.PlainText
+              text: root.history.length === 0 ? Commons.I18n.t("clipboard.empty") : Commons.I18n.t("common.noMatchesFor").arg(root.filterText)
+              color: root.foreground
+              opacity: 0.7
+              font.family: root.fontFamily
+              font.pixelSize: Style.font.title
+              horizontalAlignment: Text.AlignHCenter
+              width: parent.width
+            }
+          }
+        }
+      }
     }
+  }
 }

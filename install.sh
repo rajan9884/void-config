@@ -11,7 +11,6 @@
 #   --packages-only   install XBPS packages and enable services, skip dotfile links
 #   --links-only      only (re)create ~/.config ~/ ~/.local/bin symlinks
 #   --no-fonts        skip the Nerd Font download step
-#   --no-wallpapers   skip the wallpaper collection download step
 #   -h, --help        show this help and exit
 #
 # The script is idempotent: re-running it repairs missing links/packages.
@@ -27,14 +26,12 @@ BACKUP_DIR="$HOME/.config-backup-void-$(date +%Y%m%d-%H%M%S)"
 DO_PACKAGES=1
 DO_LINKS=1
 DO_FONTS=1
-DO_WALLPAPERS=1
 
 for arg in "$@"; do
     case "$arg" in
         --packages-only) DO_LINKS=0 ;;
-        --links-only) DO_PACKAGES=0; DO_FONTS=0; DO_WALLPAPERS=0 ;;
+        --links-only) DO_PACKAGES=0; DO_FONTS=0 ;;
         --no-fonts) DO_FONTS=0 ;;
-        --no-wallpapers) DO_WALLPAPERS=0 ;;
         -h|--help)
             sed -n '2,/^$/p' "$0" | sed 's/^# \{0,1\}//'
             exit 0
@@ -327,39 +324,6 @@ if [ "$DO_FONTS" -eq 1 ]; then
             warn "font download failed; copy .ttf files to ~/.local/share/fonts manually"
         fi
         rm -rf "$tmp"
-    fi
-fi
-
-# ------------------------------------------------------------- wallpapers ---
-if [ "$DO_WALLPAPERS" -eq 1 ]; then
-    WALL_DIR="$HOME/.local/share/wallpapers"
-    mkdir -p "$WALL_DIR"
-    if [ "$(find "$WALL_DIR" -type f | head -1)" ]; then
-        log "Wallpapers already present in $WALL_DIR ($(find "$WALL_DIR" -type f | wc -l) files), skipping download"
-    else
-        log "Fetching wallpaper collection (best effort)"
-        tmp="$(mktemp -d)"
-        if git clone --depth 1 https://github.com/rajan9884/wallpapers "$tmp/wallpapers" >/dev/null 2>&1; then
-            # Flatten: copy every image out of the nested repo layout,
-            # -n keeps any user-added file with the same name.
-            find "$tmp/wallpapers" -type f \( -iname "*.jpg" -o -iname "*.jpeg" \
-                -o -iname "*.png" -o -iname "*.webp" \) \
-                -exec cp -n {} "$WALL_DIR/" \;
-            log "  $(find "$WALL_DIR" -type f | wc -l) wallpapers in $WALL_DIR"
-        else
-            warn "wallpaper clone failed; copy images to $WALL_DIR manually"
-        fi
-        rm -rf "$tmp"
-    fi
-    # hypr's init-wallpaper.sh restores the last wallpaper; guarantee at least
-    # one image exists so a fresh clone never errors at startup.
-    if [ ! -f "$WALL_DIR/fallback-wallpaper.jpg" ]; then
-        _fb="$(find "$WALL_DIR" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' \
-            -o -iname '*.png' -o -iname '*.webp' \) 2>/dev/null | sort | head -n 1 || true)"
-        if [ -n "${_fb:-}" ]; then
-            cp -n "$_fb" "$WALL_DIR/fallback-wallpaper.jpg"
-            log "  seeded fallback wallpaper from $(basename "$_fb")"
-        fi
     fi
 fi
 
